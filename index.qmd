@@ -1,13 +1,21 @@
 ---
 title: "Data Science for Public Policy"
-subtitle: "Assignment8"
-author: "Xiangming Zeng - xz634, Ruiyang Zhang - rz326"
+subtitle: "Final Project"
+author: "Xiangming Zeng - xz634, Ruiyang Zhang - rz326, Lingxi Li - ll1188, Xiaorui Shi - xs215"
 execute:
   warning: false
 format:
   html:
     embed-resources: true
 ---
+
+## Research question
+
+1: 新能源
+2：充电桩+公共设施
+3：预测空气治理里昂
+4：预测充电桩
+5：投资对比
 
 ## Packages
 

@@ -9,15 +9,14 @@ format:
     embed-resources: true
 ---
 
-## Research question
+# Research question
 
-1: 新能源
-2：充电桩+公共设施
-3：预测空气治理里昂
-4：预测充电桩
-5：投资对比
+In the current study, we aim to explore and analyze the distribution of new energy power production and its power stations at the county level in the United States for the year 2021, using DC charging stations as a case study to further examine the relationship between charging infrastructure and public facilities. By integrating and utilizing data from the American Community Survey (ACS), such as income, education level, heating methods, and commuting methods, we will predict the number of charging stations in each county. Additionally, we will assess the air quality forecasts for each county and how these forecasts reflect the investments in new energy sources in 2023. This study not only provides insights into the geographic distribution of new energy technologies but also supports future energy policies and infrastructure development through an analysis of the interaction between charging infrastructure and socio-economic factors.
 
-## Packages
+# Data sets description
+
+
+## Library packages
 
 ```{r}
 library(sf)
@@ -117,16 +116,16 @@ ggplot()+
        color = "Facilities") 
 ```
 
-From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads. 
+From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads.
 
-University campuses generally have good accessibility to alternative fueling stations. Hospitals in the northern part of DC are all near alternative fueling stations, while the three hospitals in the south are relatively far from them. 
+University campuses generally have good accessibility to alternative fueling stations. Hospitals in the northern part of DC are all near alternative fueling stations, while the three hospitals in the south are relatively far from them.
 
-In the northwest of DC, where the household income is the highest, the distribution of alternative fueling stations is relatively even, and residents and schools have good accessibility to them. 
+In the northwest of DC, where the household income is the highest, the distribution of alternative fueling stations is relatively even, and residents and schools have good accessibility to them.
 
-In the northeast of DC, although the household income is lower, the distribution of alternative fueling stations is still relatively even. 
+In the northeast of DC, although the household income is lower, the distribution of alternative fueling stations is still relatively even.
 
-In the eastern part, where the household income further decreases, despite the presence of numerous schools and government buildings, there are only few and concentrated alternative fueling stations, resulting in poor accessibility. 
+In the eastern part, where the household income further decreases, despite the presence of numerous schools and government buildings, there are only few and concentrated alternative fueling stations, resulting in poor accessibility.
 
-In the southern part, where the household income is low and there are many schools, hospitals, and government buildings, the number of alternative fueling stations is few and mainly located along the main roads, leading to poor accessibility. 
+In the southern part, where the household income is low and there are many schools, hospitals, and government buildings, the number of alternative fueling stations is few and mainly located along the main roads, leading to poor accessibility.
 
 Overall, alternative fueling stations are concentrated in the downtown area of DC, and the household income of neighborhoods is highly correlated with the accessibility of alternative fueling stations. Groups with disadvantaged socio-economic status face difficulties in accessing new energy charging facilities.

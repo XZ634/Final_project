@@ -1,0 +1,124 @@
+---
+title: "Data Science for Public Policy"
+subtitle: "Assignment8"
+author: "Xiangming Zeng - xz634, Ruiyang Zhang - rz326"
+execute:
+  warning: false
+format:
+  html:
+    embed-resources: true
+---
+
+## Packages
+
+```{r}
+library(sf)
+library(tidyverse)
+library(here)
+library(tigris)
+library(tidycensus)
+```
+
+## A micro case: alternative fueling stations in DC
+
+### Read datasets
+
+```{r}
+dc_roads <- roads(state = "DC", 
+                  county = "District of Columbia")
+
+dc_income <- get_acs(
+  geography = "tract",
+  variables = "B19013_001",
+  state = "DC",
+  county = "District of Columbia",
+  geometry = TRUE,
+  year = 2021,
+  progress = FALSE
+)
+
+dc_hospitals <- st_read("data/DC_Hospitals.geojson") %>% 
+  st_transform(crs = 4269) %>% 
+  select(geometry) %>% 
+  mutate(facility = "hospital", id = 1)
+
+
+dc_cha_schs <- st_read("data/DC_Charter_Schools.geojson") %>% 
+  st_transform(crs = 4269) %>% 
+  select(geometry) %>% 
+  mutate(facility = "charter school", id = 2)
+
+dc_pub_schs <- st_read("data/DC_Public_Schools.geojson") %>% 
+  st_transform(crs = 4269) %>% 
+  select(geometry) %>% 
+  mutate(facility = "public school", id = 3)
+
+dc_campuses <- st_read("data/University_and_College_Campuses.geojson") %>% 
+  st_transform(crs = 4269) %>% 
+  select(geometry) %>% 
+  mutate(facility = "university/college campus", id = 4)
+
+
+alt_fuel_stations <- st_read("data/Alternative_Fueling_Stations.geojson") %>% 
+  st_transform(crs = 4269) %>% 
+  select(geometry) %>% 
+  mutate(facility = "alternative fueling station")
+
+dc_gov <- st_read("data/District_Government_Owned_Structures.geojson") %>% 
+  st_transform(crs = 4269) %>% 
+  select(geometry) %>% 
+  mutate(facility = "governmental building", id = 5)
+
+dc_boundary <- states(cb = TRUE, progress_bar = FALSE) %>%
+  filter(STUSPS == "DC") 
+
+dc_alt_fuel_stations <- st_filter(alt_fuel_stations, dc_boundary) %>% 
+  mutate(id = 6)
+
+facilities <- bind_rows(dc_hospitals, 
+                        dc_cha_schs, 
+                        dc_pub_schs, 
+                        dc_campuses, 
+                        dc_gov,
+                        dc_alt_fuel_stations
+                        ) %>% 
+  mutate(fac_facility = as.factor(facility))
+```
+
+### Data visualization
+
+```{r}
+ggplot()+
+  geom_sf(data = dc_income, aes(fill = estimate), color = "white", size = 0)+
+  geom_sf(data = dc_roads, color = "orange", alpha = 0.3)+
+  geom_sf(data = facilities, aes(color = fac_facility), fill = "white", alpha = 0.7)+
+  scale_fill_gradient(
+    labels = scales::dollar
+  )+
+  scale_color_manual(values = c(
+    "alternative fueling station" = "green", 
+    "charter school" = "yellow", 
+    "governmental building" = "grey",
+    "hospital" = "red",
+    "public school" = "gold",
+    "university/college campus" = "pink"
+    ))+
+  geom_sf(data = dc_campuses, color = "pink", fill = "pink", alpha = 0.5)+
+  theme_void()+
+  labs(fill = "Household Income",
+       color = "Facilities") 
+```
+
+From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads. 
+
+University campuses generally have good accessibility to alternative fueling stations. Hospitals in the northern part of DC are all near alternative fueling stations, while the three hospitals in the south are relatively far from them. 
+
+In the northwest of DC, where the household income is the highest, the distribution of alternative fueling stations is relatively even, and residents and schools have good accessibility to them. 
+
+In the northeast of DC, although the household income is lower, the distribution of alternative fueling stations is still relatively even. 
+
+In the eastern part, where the household income further decreases, despite the presence of numerous schools and government buildings, there are only few and concentrated alternative fueling stations, resulting in poor accessibility. 
+
+In the southern part, where the household income is low and there are many schools, hospitals, and government buildings, the number of alternative fueling stations is few and mainly located along the main roads, leading to poor accessibility. 
+
+Overall, alternative fueling stations are concentrated in the downtown area of DC, and the household income of neighborhoods is highly correlated with the accessibility of alternative fueling stations. Groups with disadvantaged socio-economic status face difficulties in accessing new energy charging facilities.

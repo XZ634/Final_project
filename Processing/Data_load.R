@@ -3,6 +3,7 @@ library(sf)
 library(readxl)
 library(patchwork)
 library(readr)
+library(tigris)
 
 f860_path <- "data/eia8602021/2___Plant_Y2021.xlsx"
 f860 <- read_excel(f860_path,skip=1) %>% 
@@ -155,6 +156,24 @@ state_cty_fulldata <- left_join(
   by = c("geoid"="geo_id")
 )
 
+## load in station data
+alt_fuel_stations <- st_read("data/Alternative_Fueling_Stations.geojson") %>% 
+  st_transform(crs = 4326) %>%
+  select(station_name, geometry)
 
+counties <- counties(cb = TRUE, progress_bar = FALSE) %>% 
+  st_transform(crs = 4326) 
+
+fueling_stations <- st_join(counties, alt_fuel_stations) %>%
+  st_drop_geometry() %>% 
+  group_by(GEOID) %>% 
+  summarize(station_count = n()) 
+
+## add in station data
+state_cty_fulldata <- left_join(
+  state_cty_fulldata,
+  fueling_stations,
+  by = c("geoid"="GEOID")
+)
 
 

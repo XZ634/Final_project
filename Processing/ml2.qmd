@@ -1,0 +1,143 @@
+---
+title: "ml-2"
+format: html
+editor: visual
+---
+
+## Library
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(recipes)
+library(vip) 
+library(patchwork)
+library(rsample)
+```
+
+## Date resource
+
+```{r}
+data <- read_csv("/Users/xiaoruishi/Desktop/spring2024/R/homework/Final-project/Final_project/data/combined_dta.csv")
+```
+
+## ML
+
+```{r}
+set.seed(20240510)
+
+# Split,create training and testing data
+data<-data %>% 
+  filter(!is.na(station_count))
+
+sta_split <- initial_split(data)
+sta_train <- training(sta_split)
+sta_test <- testing(sta_split)
+
+# Recipe
+sta_rec<-recipe(station_count~ Days.with.AQI + Median.AQI + total_pop_25 + b_aor_higher_pop_25 +
+                  percent_b_aor_higher + mean_income + total_pop_comm + total_car +
+                  total_eco + heat_sum + green_heat_sum + fuel_heat_sum + ecoheat +
+                  fuelheat + code_2013, 
+                data = sta_train) %>% 
+  step_filter_missing(all_predictors()) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors(), all_nominal_predictors())
+
+
+# Create model
+lasso_spec_sta <- linear_reg(penalty = tune(), mixture = 1) %>%
+  set_engine("glmnet") %>%
+  set_mode("regression")
+
+sta_folds <- vfold_cv(sta_train, v = 10, strata = station_count)
+lasso_grid_sta <- grid_regular(penalty(), levels = 10)
+
+lasso_wf_sta <- workflow() %>% 
+  add_recipe(sta_rec) %>% 
+  add_model(lasso_spec_sta)
+
+lasso_res_sta <- lasso_wf_sta %>% 
+  tune_grid(resample = sta_folds,
+            grid = lasso_grid_sta,
+            metrics = metric_set(mae,rmse))
+
+lasso_res_sta %>% 
+  collect_metrics(summarize=F) %>% 
+  filter(.metric=="rmse") %>% 
+  ggplot(aes(x=id,y=.estimate, group=penalty, color=penalty),alpha=0.5)+
+  geom_line()+
+  geom_point()+
+  theme_minimal()
+
+## evaluate model 
+lasso_best_sta <-lasso_res_sta %>%
+  select_best(metric="rmse")
+
+lasso_final_sta <- finalize_workflow(
+  lasso_wf_sta,
+  parameters = lasso_best_sta) %>% 
+  fit(data = sta_train)
+
+predictions_sta <- bind_cols(
+  sta_test,
+  predict(object = lasso_final_sta, new_data = sta_test))
+
+rmse(data = predictions_sta, truth = station_count, estimate=.pred)
+
+lasso_final_sta %>%
+  extract_fit_parsnip() %>%
+  vip(num_features = 10)
+
+
+```
+
+## Tree
+```{r}
+tree_mod_sta <- decision_tree() %>%
+  set_engine("rpart") %>%
+  set_mode("regression")
+
+tree_wf_sta <- workflow() %>% 
+  add_recipe(sta_rec) %>% 
+  add_model(tree_mod_sta)
+
+tree_res_sta <- fit_resamples(
+  tree_wf_sta,
+  resamples = sta_folds
+)
+
+tree_metrics <- collect_metrics(tree_res_sta,
+                metric_set(rmse,mae),summarize=F)
+
+tree_metrics %>% 
+  ggplot(aes(x=id, y=.estimate,group=.metric,color=.metric))+
+  geom_line()+
+  geom_point()
+
+print(tree_metrics %>% 
+  filter(.metric=="rmse") %>% 
+  summarise(dt_average_rmse = mean(.estimate),
+            min_rmse = min(.estimate))
+  )
+
+tree_best_sta <-tree_res_sta %>%
+  select_best(metric="rmse")
+
+tree_final_sta <- finalize_workflow(
+  tree_wf_sta,
+  parameters = tree_best_sta) %>% 
+  fit(data = sta_train)
+
+tree_predictions_sta <- bind_cols(
+  sta_test,
+  predict(object = tree_final_sta, new_data = sta_test))
+
+rmse(data = tree_predictions_sta, truth = station_count, estimate=.pred)
+
+tree_final_sta %>%
+  extract_fit_parsnip() %>%
+  vip(num_features = 10)
+```
+
+

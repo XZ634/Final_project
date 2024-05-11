@@ -13,26 +13,157 @@ format:
 
 In the current study, we aim to explore and analyze the distribution of new energy power production and its power stations at the county level in the United States for the year 2021, using DC charging stations as a case study to further examine the relationship between charging infrastructure and public facilities. By integrating and utilizing data from the American Community Survey (ACS), such as income, education level, heating methods, and commuting methods, we will predict the number of charging stations in each county. Additionally, we will assess the air quality forecasts for each county and how these forecasts reflect the investments in new energy sources in 2023. This study not only provides insights into the geographic distribution of new energy technologies but also supports future energy policies and infrastructure development through an analysis of the interaction between charging infrastructure and socio-economic factors.
 
-# Data sets description
+## Data sets description
 
 
 ## Library packages
 
 ```{r}
-library(sf)
 library(tidyverse)
+library(sf)
 library(here)
 library(tigris)
 library(tidycensus)
+library(readxl)
+library(here)
+```
+
+## Overview: green electricity generation in the U.S.
+
+### Read and combine datasets
+
+```{r}
+#read electric power plants data
+plants <- read_excel("data/2___Plant_Y2021.xlsx", skip=1) %>% 
+  janitor::clean_names() %>% 
+  select(plant_code, latitude, longitude)
+
+#read electricity generation data
+elec_generation <- read_excel("data/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx", 
+                         sheet = 1, skip = 5) %>% 
+  janitor::clean_names() %>% 
+  mutate(plant_code = plant_id,
+         fuel_type = aer_fuel_type_code,
+         net_generation = net_generation_megawatthours) %>% 
+  select(plant_code, fuel_type, net_generation) 
+
+#combine datasets
+elec_generation <- left_join(x = elec_generation,y = plants,by = "plant_code") %>% 
+  filter(
+    !is.na(longitude),
+    !is.na(latitude)
+  ) %>% 
+  st_as_sf(coords = c("longitude","latitude")) %>% 
+  st_set_crs(4326) 
+```
+
+### County-level distribution of green electricity generation
+
+```{r}
+#filter green electricity generation
+green_elec_generation <- elec_generation %>% 
+  filter(fuel_type %in% c("SUN","GEO","HPS","HYC","MLG","ORW","WND","WWW"))
+
+#read counties data
+counties <- counties(cb = TRUE, progress_bar = FALSE) %>%
+  janitor::clean_names() %>% 
+  st_transform(crs = 4326) %>%
+  filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
+  select(geoid, name, stusps, geometry)
+
+#use spatial join to get green electricity generated in each county
+c_green_elec <- st_join(counties, green_elec_generation) %>% 
+  st_drop_geometry() %>% 
+  group_by(geoid) %>% 
+  summarize(green_elec = sum(net_generation)) %>% 
+  mutate(green_elec = replace_na(green_elec, 0))
+
+#combine datasets to get geometry for c_green_elec
+c_green_elec <- left_join(counties, c_green_elec, by = "geoid")
+
+#visualize green electricity generation at county-level
+ggplot()+
+  geom_sf(c_green_elec, mapping = aes(fill = log(green_elec)))+ 
+  scale_fill_gradient(
+    low = "lightgreen",
+    high = "darkgreen",
+    na.value = "lightyellow"
+  )+
+  labs(title = "Net Renewable Electricity Generation By County",
+       subtitle = "logged megawatthours (white indicates zero generation)",
+       caption = "U.S. Energy Information Administration",
+       fill = "") +
+  theme_void()
+```
+
+From the graph, we can see that green electricity production is mainly distributed along the East Coast, the West, and the Northeast in the United States, while it is relatively lacking in the center.
+
+### State-level distribution of green electricity generation
+
+```{r}
+#summarize state-level data
+s_green_elec <- c_green_elec %>% 
+  st_drop_geometry() %>% 
+  group_by(stusps) %>% 
+  summarise(green_elec = sum(green_elec))
+
+#read states data
+states <- states(cb = TRUE, progress_bar = FALSE) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs = 4326) %>%
+  filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
+  select(stusps, geometry)
+
+#combine datasets to get geometry for s_green_elec
+s_green_elec <- left_join(states, s_green_elec, by = "stusps")
+
+#filter plants with green electricity generation within states
+green_elec_generation <- st_filter(green_elec_generation, states)
+
+#identify 3 most common fuel type
+green_elec_generation %>% 
+  group_by(fuel_type) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+#visualize green electricity generation at state-level
+ggplot()+
+  geom_sf(s_green_elec, mapping = aes(fill = green_elec/1000))+ 
+  scale_fill_gradient(
+    low = "lightgreen",
+    high = "darkgreen"
+  )+
+  geom_sf(data = green_elec_generation %>% 
+            filter(fuel_type %in% c("HYC", "SUN", "WND")),
+          mapping = aes(color = fuel_type), size=0.3)+
+  labs(title = "Net renewable electricity generation by state",
+       subtitle = "1000 megawatthours",
+       caption = "U.S. Energy Information Administration",
+       fill = "",
+       color = "plants with green electricity generation") +
+  scale_color_manual(
+    name = "Fuel Type",
+    labels = c("HYC" = "Hydroelectric Conventional", "SUN" = "Solar", "WND" = "Wind"),
+    values = c("HYC" = "red", "SUN" = "yellow", "WND" = "blue")) +
+  theme_void()
+```
+
+From the graph, we can see that California, Washington, and Texas are leading in green electricity production. Additionally, power plants of different energy types have distinct spatial distribution characteristics. Solar energy is mainly concentrated on the East and West Coasts, wind energy is mainly concentrated in the central inland areas, while the distribution of hydroelectric conventional is more dispersed.
+
+```{r}
+#remove used dataframes
+rm(green_elec_generation, plants, s_green_elec)
 ```
 
 ## A micro case: alternative fueling stations in DC
 
-### Read datasets
+### Read and combine datasets
 
 ```{r}
+#read all datasets
 dc_roads <- roads(state = "DC", 
-                  county = "District of Columbia")
+                  county = "District of Columbia") %>% 
+  st_transform(crs = 4269)
 
 dc_income <- get_acs(
   geography = "tract",
@@ -45,75 +176,78 @@ dc_income <- get_acs(
 )
 
 dc_hospitals <- st_read("data/DC_Hospitals.geojson") %>% 
-  st_transform(crs = 4269) %>% 
+  st_transform(crs = 4326) %>% 
   select(geometry) %>% 
-  mutate(facility = "hospital", id = 1)
-
+  mutate(facility = "Hospital")
 
 dc_cha_schs <- st_read("data/DC_Charter_Schools.geojson") %>% 
-  st_transform(crs = 4269) %>% 
+  st_transform(crs = 4326) %>% 
   select(geometry) %>% 
-  mutate(facility = "charter school", id = 2)
+  mutate(facility = "Charter School")
 
 dc_pub_schs <- st_read("data/DC_Public_Schools.geojson") %>% 
-  st_transform(crs = 4269) %>% 
+  st_transform(crs = 4326) %>% 
   select(geometry) %>% 
-  mutate(facility = "public school", id = 3)
+  mutate(facility = "Public School")
 
 dc_campuses <- st_read("data/University_and_College_Campuses.geojson") %>% 
-  st_transform(crs = 4269) %>% 
+  st_transform(crs = 4326) %>% 
   select(geometry) %>% 
-  mutate(facility = "university/college campus", id = 4)
-
-
-alt_fuel_stations <- st_read("data/Alternative_Fueling_Stations.geojson") %>% 
-  st_transform(crs = 4269) %>% 
-  select(geometry) %>% 
-  mutate(facility = "alternative fueling station")
+  mutate(facility = "University/College Campus")
 
 dc_gov <- st_read("data/District_Government_Owned_Structures.geojson") %>% 
-  st_transform(crs = 4269) %>% 
+  st_transform(crs = 4326) %>% 
   select(geometry) %>% 
-  mutate(facility = "governmental building", id = 5)
+  mutate(facility = "Governmental Building")
+
+alt_fuel_stations <- st_read("data/Alternative_Fueling_Stations.geojson") %>% 
+  st_transform(crs = 4326) %>% 
+  select(geometry) %>% 
+  mutate(facility = "Alternative Fueling Station")
 
 dc_boundary <- states(cb = TRUE, progress_bar = FALSE) %>%
-  filter(STUSPS == "DC") 
+  filter(STUSPS == "DC") %>% 
+  st_transform(crs = 4326)
 
-dc_alt_fuel_stations <- st_filter(alt_fuel_stations, dc_boundary) %>% 
-  mutate(id = 6)
+#filter alternative fueling stations in DC
+dc_alt_fuel_stations <- st_filter(alt_fuel_stations, dc_boundary) 
 
+#combine datasets
 facilities <- bind_rows(dc_hospitals, 
                         dc_cha_schs, 
                         dc_pub_schs, 
                         dc_campuses, 
                         dc_gov,
-                        dc_alt_fuel_stations
-                        ) %>% 
-  mutate(fac_facility = as.factor(facility))
+                        dc_alt_fuel_stations) 
 ```
 
 ### Data visualization
 
 ```{r}
+#mapping facilities
 ggplot()+
   geom_sf(data = dc_income, aes(fill = estimate), color = "white", size = 0)+
   geom_sf(data = dc_roads, color = "orange", alpha = 0.3)+
-  geom_sf(data = facilities, aes(color = fac_facility), fill = "white", alpha = 0.7)+
+  geom_sf(data = facilities, aes(color = facility), fill = "white", alpha = 0.7)+
   scale_fill_gradient(
     labels = scales::dollar
   )+
   scale_color_manual(values = c(
-    "alternative fueling station" = "green", 
-    "charter school" = "yellow", 
-    "governmental building" = "grey",
-    "hospital" = "red",
-    "public school" = "gold",
-    "university/college campus" = "pink"
-    ))+
+    "Alternative Fueling Station" = "green", 
+    "Charter School" = "yellow", 
+    "Governmental Building" = "grey",
+    "Hospital" = "red",
+    "Public School" = "gold",
+    "University/College Campus" = "pink"
+  ))+
   geom_sf(data = dc_campuses, color = "pink", fill = "pink", alpha = 0.5)+
   theme_void()+
-  labs(fill = "Household Income",
-       color = "Facilities") 
+  labs(
+    title = "The Map of Alternative Fueling Stations In DC",
+    subtitle = "Who have poor accessibility to alternative fueling stations?",
+    caption = "U.S. Department of Transportation",
+    fill = "Household Income",
+    color = "Facilities") 
 ```
 
 From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads.
@@ -129,3 +263,18 @@ In the eastern part, where the household income further decreases, despite the p
 In the southern part, where the household income is low and there are many schools, hospitals, and government buildings, the number of alternative fueling stations is few and mainly located along the main roads, leading to poor accessibility.
 
 Overall, alternative fueling stations are concentrated in the downtown area of DC, and the household income of neighborhoods is highly correlated with the accessibility of alternative fueling stations. Groups with disadvantaged socio-economic status face difficulties in accessing new energy charging facilities.
+
+```{r}
+#remove used dataframes
+rm(dc_boundary,
+   dc_income,
+   dc_roads,
+   dc_hospitals, 
+   dc_cha_schs, 
+   dc_pub_schs, 
+   dc_campuses, 
+   dc_gov,
+   dc_alt_fuel_stations,
+   facilities)
+```
+

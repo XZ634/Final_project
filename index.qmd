@@ -387,7 +387,7 @@ variables <- list(
            "taxicab",
            "motorcycled",
            "bicycled",
-           "worked"
+           "walked"
           )
 )
 
@@ -521,3 +521,94 @@ rm(air,
    predictions)
 ```
 
+## What's the key predictors for alternative fueling stations?
+
+With the development of the green energy car industry, the demand for alternative fueling stations is increasing. Is there a shortage of alternative fueling stations in DC? To address this question, we will establish a lasso regression model to identify the most significant predictors for the number of alternative fueling stations in a city. We believe this model will be highly relevant for policymakers in urban areas.
+
+### Data cleaning
+Due to more than 2000 missing values in good_days_rate, I will remove it to avoid having too small of a sample size.
+
+```{r}
+green <- green %>% 
+  select(-good_days_rate)
+```
+
+### Lasso regression model
+
+```{r}
+#split data
+
+green_split <- initial_split(green, prop = 0.75)
+
+green_train <- training(green_split)
+green_test <- testing(green_split)
+
+#create a recipe
+green_rec <- recipe(alt_fuel_stations ~ . , data = green_train) %>% 
+  step_filter_missing(all_predictors()) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors(), all_nominal_predictors())
+
+#create a lasso model
+lasso_green <- linear_reg(penalty = tune(), mixture = 1) %>%
+  set_engine("glmnet") %>%
+  set_mode("regression")
+
+folds <- vfold_cv(green_train, v = 10, strata = alt_fuel_stations)
+
+lasso_grid <- grid_regular(penalty(), levels = 10)
+
+lasso_wf_green <- workflow() %>% 
+  add_recipe(green_rec) %>% 
+  add_model(lasso_green)
+
+#fit model
+lasso_res_green <- lasso_wf_green %>% 
+  tune_grid(resample = folds,
+            grid = lasso_grid,
+            metrics = metric_set(mae,rmse))
+
+#visualize model fit
+lasso_res_green %>% 
+  collect_metrics(summarize=F) %>% 
+  filter(.metric=="rmse") %>% 
+  ggplot(aes(x=id,y=.estimate, group=penalty, color=penalty),alpha=0.5)+
+  geom_line()+
+  geom_point()+
+  theme_minimal()
+```
+
+### Evaluate model
+
+```{r}
+#select best model
+lasso_best_green <-lasso_res_green %>%
+  select_best(metric = "rmse")
+
+#finalize model
+lasso_final_green <- finalize_workflow(
+  lasso_wf_green,
+  parameters = lasso_best_green) %>% 
+  fit(data = green_train)
+
+#predict
+predictions <- bind_cols(
+  green_test,
+  predict(object = lasso_final_green, new_data = green_test))
+
+#calculate rmse
+rmse(data = predictions, truth = alt_fuel_stations, estimate=.pred)
+
+summary(green$alt_fuel_stations)
+```
+
+The RMSE is 34, which is relatively small compared to the range of 4783. However, considering the median number of alternative fueling stations is 4, and since most counties are not urban areas, this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
+
+```{r}
+#feature inportance
+lasso_final_green %>%
+  extract_fit_parsnip() %>%
+  vip(num_features = 10)
+```
+
+The four most significant predictors are population, utility gas consumption, population with Bachelor's degree, and electricity consumption. All of these variables have a clear correlation with the demand for alternative fueling stations. Additionally, the remaining key, albeit less significant, factors are primarily related to modes of transportation, indicating that citizens' preferences for cleaner transportation methods such as public transportation, cycling, motorcycling, and walking are also relevant to their demand for alternative fueling stations.

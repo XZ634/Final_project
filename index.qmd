@@ -414,3 +414,110 @@ rm(alt_fuel_stations,
    variables)
 ```
 
+## Can green energy industry help predict air quality?
+
+Since green energy use (alternative energy cars) and production (green electricity) are more environmental-friendly, we expect that green energy industry contributes to better air quality. In this section, we will use a decision tree model to test this hypothesis.
+
+### Data cleaning 
+
+```{r}
+#remove rows with missing air quality
+air <- green %>% filter(!is.na(good_days_rate))
+
+#turn good_days_rate into dummy
+summary(air$good_days_rate)
+```
+
+### Dummy variable generation
+
+The median of good_days_rate is 84, so I will code air_quality as "good" if good_days_rate > 84, and as "bad" if good_days_rate <= 84
+
+```{r}
+air <- air %>% 
+  mutate(air_quality = if_else(good_days_rate > 84, "good", "bad")) %>%
+  mutate(air_quality = factor(air_quality, levels = c("good", "bad"))) %>% 
+  select(-good_days_rate)
+```
+
+### Decision tree model
+
+```{r}
+set.seed(20240511)
+
+#split data
+air_split <- initial_split(data = air, prop = 0.75)
+
+air_train <- training(x = air_split)
+air_test <- testing(x = air_split)
+
+#create a recipe
+air_rec <-
+  recipe(formula = air_quality ~ ., data = air_train)
+
+#create a model
+air_mod <-
+  decision_tree() %>%
+  set_engine(engine = "rpart") %>%
+  set_mode(mode = "classification")
+
+air_wf <- workflow() %>%
+  add_recipe(air_rec) %>%
+  add_model(air_mod)
+
+#fit the model
+air_fit <- air_wf %>%
+  fit(data = air_train)
+```
+
+### Evaluate model
+
+```{r}
+#evaluate model
+predictions <- bind_cols(
+  air_test,
+  predict(object = air_fit, new_data = air_test),
+  predict(object = air_fit, new_data = air_test, type = "prob")
+)
+
+#confusion matrix
+conf_mat(data = predictions,
+         truth = air_quality,
+         estimate = .pred_class)
+
+#accuracy
+accuracy(data = predictions,
+         truth = air_quality,
+         estimate = .pred_class)
+
+#precision
+precision(data = predictions,
+         truth = air_quality,
+         estimate = .pred_class)
+
+#recall
+recall(data = predictions,
+          truth = air_quality,
+          estimate = .pred_class)
+
+#feature importance
+air_fit %>%
+  extract_fit_parsnip() %>%
+  vip(num_features = 10)
+```
+
+In this prediction result, accuracy, precession, and recall are between 0.6 and o.7, indicating weak prediction power. Therefore, this model can't predict air quality well. Besides, The 10 most important predictors donn't include green_elec or alt_fuel_stations, suggesting that green industry is not a strong predictor for air quality.
+
+### Remove irrelevant data
+
+```{r}
+rm(air,
+   air_fit,
+   air_mod,
+   air_rec,
+   air_split,
+   air_test,
+   air_train,
+   air_wf,
+   predictions)
+```
+

@@ -26,6 +26,9 @@ library(tigris)
 library(tidycensus)
 library(readxl)
 library(here)
+library(purrr)
+library(tidymodels)
+library(vip)
 ```
 
 ## Overview: green electricity generation in the U.S.
@@ -69,7 +72,7 @@ counties <- counties(cb = TRUE, progress_bar = FALSE) %>%
   janitor::clean_names() %>% 
   st_transform(crs = 4326) %>%
   filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
-  select(geoid, name, stusps, geometry)
+  select(geoid, name, stusps, state_name, geometry)
 
 #use spatial join to get green electricity generated in each county
 c_green_elec <- st_join(counties, green_elec_generation) %>% 
@@ -101,7 +104,6 @@ From the graph, we can see that green electricity production is mainly distribut
 ### State-level distribution of green electricity generation
 
 ```{r}
-#summarize state-level data
 s_green_elec <- c_green_elec %>% 
   st_drop_geometry() %>% 
   group_by(stusps) %>% 
@@ -276,5 +278,139 @@ rm(dc_boundary,
    dc_gov,
    dc_alt_fuel_stations,
    facilities)
+```
+
+## Combine datasets for machine learning
+
+### Combine existing data
+
+```{r}
+# count the number of alternative fueling stations in each county
+c_fueling_stations <- st_join(counties, alt_fuel_stations) %>% 
+  st_drop_geometry() %>% 
+  group_by(geoid) %>% 
+  summarize(alt_fuel_stations = n())
+
+# sum the total electricity generation in each county
+c_total_elec <- st_join(counties, elec_generation) %>% 
+  st_drop_geometry() %>% 
+  group_by(geoid) %>% 
+  summarize(total_elec = sum(net_generation)) %>% 
+  mutate(total_elec = replace_na(total_elec, 0))
+
+#combine all county-level datasets
+green <- left_join(c_green_elec, c_total_elec, by = "geoid")
+green <- left_join(green, c_fueling_stations, by = "geoid")
+```
+
+### Combine air quality data
+
+```{r}
+#read air quality index data 
+c_aqi <- read.csv("data/annual_aqi_by_county_2021.csv") %>% 
+  janitor::clean_names() %>% 
+  select(state, county, days_with_aqi, good_days) %>% 
+#use the percent of good days to indicate air quality
+  mutate(good_days_rate = 100*good_days/days_with_aqi) %>% 
+  select(state, county, good_days_rate)
+
+#combine datasets
+green <- left_join(green, c_aqi, by = c("state_name" = "state", "name" = "county"))
+```
+
+### Combine urban categories data
+
+```{r}
+#read urban categories data
+c_urban <- read.csv("data/Urban-Rural Classification Scheme 2013.csv") %>% 
+  janitor::clean_names() %>% 
+  select(abb, county, urban = code_2013) %>% 
+#reverse coding, using 1-6 to represent increasing urban rate
+  mutate(urban = 7 - urban)
+
+#combine datasets
+green <- left_join(green, c_urban, by = c("stusps" = "abb", "name" = "county"))
+```
+
+### Combine ACS data
+
+```{r}
+#create a function
+acs_combine <- function(variable, name) {
+df <- get_acs(
+    geography = "county",
+    variables = variable,
+    year = 2021,
+    progress = FALSE
+  ) %>% 
+    janitor::clean_names() %>% 
+    select(geoid, {{ name }} := estimate) 
+
+green <<- left_join(green, df, by = "geoid")
+
+invisible()
+}
+
+#create a list for new acs variables
+variables <- list(
+  variable = c("B19013_001", 
+               "B01003_001",
+               "B15003_022E",
+               "B08007_001E",
+               "B25040_002E",
+               "B25040_003E",
+               "B25040_004E",
+               "B25040_005E",
+               "B25040_006E",
+               "B25040_007E",
+               "B08301_003E",
+               "B08301_004E",
+               "B08301_010E",
+               "B08301_016E",
+               "B08301_017E",
+               "B08301_018E",
+               "B08301_019E"
+               ),
+  name = c("income", 
+           "population", 
+           "bachelor",
+           "labor",
+           "utility_gas",
+           "bottled_gas",
+           "electricity",
+           "oil",
+           "coal",
+           "wood",
+           "drive_alone",
+           "carpooled",
+           "public_trans",
+           "taxicab",
+           "motorcycled",
+           "bicycled",
+           "worked"
+          )
+)
+
+#combine
+pmap(variables, acs_combine)
+```
+
+### Remove irrelevant features
+
+```{r}
+#remove irrelavant variables
+green <- green %>% 
+  select(-geoid, -name, -stusps, -state_name) %>% 
+  st_drop_geometry()
+
+#remove used datasets
+rm(alt_fuel_stations,
+   c_aqi,
+   c_fueling_stations,
+   c_green_elec,
+   c_total_elec,
+   c_urban,
+   elec_generation,
+   variables)
 ```
 

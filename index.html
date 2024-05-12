@@ -3825,15 +3825,32 @@ Prediction good bad
 <p>The four most significant predictors are population, utility gas consumption, population with Bachelor’s degree, and electricity consumption. All of these variables have a clear correlation with the demand for alternative fueling stations. Additionally, the remaining key, albeit less significant, factors are primarily related to modes of transportation, indicating that citizens’ preferences for cleaner transportation methods such as public transportation, cycling, motorcycling, and walking are also relevant to their demand for alternative fueling stations.</p>
 </section>
 </section>
-<section id="references" class="level2">
-<h2 class="anchored" data-anchor-id="references">References</h2>
+</section>
+<section id="vi.-conclusion-and-discussion" class="level1">
+<h1>VI. Conclusion and Discussion</h1>
+<section id="conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="conclusions">1. Conclusions</h2>
+<p>To address the first research question, “can the use of clean energy improve environmental quality,” we developed a decision tree model. The model exhibits relatively low predictive power (accuracy = 0.681). This could be attributed to the complexity of air quality, as there are numerous factors influencing it. However, alternative fueling stations are among the 10 most important predictors, appearing as the last one, suggesting that the use of new energy vehicles may contribute to predicting air quality, albeit with a moderate correlation.</p>
+<p>Conversely, green electricity generation does not emerge as a significant predictor for air quality.In conclusion, it appears that energy consumption patterns are more influential in predicting air quality than energy production methods. This notion warrants further research.</p>
+<p>To provide guidance for future investment in infrastructure for new energy vehicles, we developed a lasso regression model to predict the number of alternative fueling stations. The model performs very well, with an RMSE of 24.4 and a range of 1144. However, since the mean number of alternative fueling stations is only 15.52 (due to most counties not being big cities), this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.</p>
+<p>The key predictors identified are population, utility gas consumption, population with Bachelor’s degrees, and electricity consumption, which align with common sense. What’s interesting is that other clean commuting patterns, like public transportation, cycling, motorcycling, and walking, are also important predictors for citizens’ demand for alternative fueling stations. The relationship between different transportation preferences deserves further study.</p>
+</section>
+<section id="limitations" class="level2">
+<h2 class="anchored" data-anchor-id="limitations">2. Limitations</h2>
+<p>Due to time constraints and limitations in available data, this study has some limitations.</p>
+<p>Firstly, our sample size is too small, especially when predicting air quality, as we only have around 1000 observations due to missing values. If alternative data covering air quality for all counties in the United States could be found, our predictions might be more accurate.</p>
+<p>Additionally, we have included too few variables. We only included the most basic socio-economic variables, energy consumption variables, and transportation mode variables. However, more variables related to pollution, such as data on sources of pollution other than the energy industry (such as manufacturing), have not been included. Future researchers should consider more comprehensive variables.</p>
+<p>Lastly, the data we used may not be precise. For example, we used alternative fueling stations as a proxy for the number of new energy vehicles to predict air quality, but this approach is crude and may not accurately reflect the relationship between new energy vehicles and air quality. Additionally, when predicting the number of alternative fueling stations, we did not use the most important predictor, the number of new energy bicycles, because we did not have access to this data. Future research should use more accurate data, such as community survey data, to estimate the number of new energy vehicles, thus obtaining more precise predictions.</p>
+</section>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
 <p>Millstein, D., Wiser, R., Bolinger, M. et al. The climate and air-quality benefits of wind and solar power in the United States. Nat Energy 2, 17134 (2017). <a href="https://doi.org/10.1038/nenergy.2017.134">https://doi.org/10.1038/nenergy.2017.134</a></p>
 <p>Ganda, F. (2018). The influence of green energy investments on environmental quality in OECD countries. Environmental Quality Management, 28(2), 17–29. <a href="https://doi.org/10.1002/tqem.21595">https://doi.org/10.1002/tqem.21595</a></p>
 <p>Caglar, A. E., &amp; Askin, B. E. (2023). A path towards green revolution: How do competitive industrial performance and renewable energy consumption influence environmental quality indicators? Renewable Energy, 205, 273–280. <a href="https://doi.org/10.1016/j.renene.2023.01.080">https://doi.org/10.1016/j.renene.2023.01.080</a></p>
 <p>Guo, J., Zhou, Y., Ali, S., Shahzad, U., &amp; Cui, L. (2021). Exploring the role of green innovation and investment in energy for environmental quality: An empirical appraisal from provincial data of China. Journal of Environmental Management, 292, 112779–112779. <a href="https://doi.org/10.1016/j.jenvman.2021.112779">https://doi.org/10.1016/j.jenvman.2021.112779</a></p>
 <p>Zafar, M. W., Shahbaz, M., Sinha, A., Sengupta, T., &amp; Qin, Q. (2020). How renewable energy consumption contribute to environmental quality? The role of education in OECD countries. Journal of Cleaner Production, 268, 122149-. <a href="https://doi.org/10.1016/j.jclepro.2020.122149">https://doi.org/10.1016/j.jclepro.2020.122149</a></p>
 <p>Kahouli, B., Hamdi, B., Nafla, A., &amp; Chabaane, N. (2022). Investigating the relationship between ICT, green energy, total factor productivity, and ecological footprint: Empirical evidence from Saudi Arabia. Energy Strategy Reviews, 42, 100871-. <a href="https://doi.org/10.1016/j.esr.2022.100871">https://doi.org/10.1016/j.esr.2022.100871</a></p>
-</section>
 </section>
 
 </main>

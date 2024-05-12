@@ -744,8 +744,29 @@ lasso_final_green %>%
 
 The four most significant predictors are population, utility gas consumption, population with Bachelor's degree, and electricity consumption. All of these variables have a clear correlation with the demand for alternative fueling stations. Additionally, the remaining key, albeit less significant, factors are primarily related to modes of transportation, indicating that citizens' preferences for cleaner transportation methods such as public transportation, cycling, motorcycling, and walking are also relevant to their demand for alternative fueling stations.
 
+# VI. Conclusion and Discussion
 
-## References
+## 1. Conclusions
+
+To address the first research question, "can the use of clean energy improve environmental quality," we developed a decision tree model. The model exhibits relatively low predictive power (accuracy = 0.681). This could be attributed to the complexity of air quality, as there are numerous factors influencing it. However, alternative fueling stations are among the 10 most important predictors, appearing as the last one, suggesting that the use of new energy vehicles may contribute to predicting air quality, albeit with a moderate correlation. 
+
+Conversely, green electricity generation does not emerge as a significant predictor for air quality.In conclusion, it appears that energy consumption patterns are more influential in predicting air quality than energy production methods. This notion warrants further research.
+
+To provide guidance for future investment in infrastructure for new energy vehicles, we developed a lasso regression model to predict the number of alternative fueling stations. The model performs very well, with an RMSE of 24.4 and a range of 1144. However, since the mean number of alternative fueling stations is only 15.52 (due to most counties not being big cities), this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
+
+The key predictors identified are population, utility gas consumption, population with Bachelor’s degrees, and electricity consumption, which align with common sense. What's interesting is that other clean commuting patterns, like public transportation, cycling, motorcycling, and walking, are also important predictors for citizens' demand for alternative fueling stations. The relationship between different transportation preferences deserves further study.
+
+## 2. Limitations
+
+Due to time constraints and limitations in available data, this study has some limitations. 
+
+Firstly, our sample size is too small, especially when predicting air quality, as we only have around 1000 observations due to missing values. If alternative data covering air quality for all counties in the United States could be found, our predictions might be more accurate. 
+
+Additionally, we have included too few variables. We only included the most basic socio-economic variables, energy consumption variables, and transportation mode variables. However, more variables related to pollution, such as data on sources of pollution other than the energy industry (such as manufacturing), have not been included. Future researchers should consider more comprehensive variables.
+
+Lastly, the data we used may not be precise. For example, we used alternative fueling stations as a proxy for the number of new energy vehicles to predict air quality, but this approach is crude and may not accurately reflect the relationship between new energy vehicles and air quality. Additionally, when predicting the number of alternative fueling stations, we did not use the most important predictor, the number of new energy bicycles, because we did not have access to this data. Future research should use more accurate data, such as community survey data, to estimate the number of new energy vehicles, thus obtaining more precise predictions.
+
+# References
 
 Millstein, D., Wiser, R., Bolinger, M. et al. The climate and air-quality benefits of wind and solar power in the United States. Nat Energy 2, 17134 (2017). [https://doi.org/10.1038/nenergy.2017.134](https://doi.org/10.1038/nenergy.2017.134)
 

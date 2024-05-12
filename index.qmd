@@ -351,7 +351,7 @@ ggplot()+
     color = "Facilities") 
 ```
 
-From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads. University campuses generally have good accessibility to alternative fueling stations.However, Hospitals on the outskirts of the city have poor accessibility to alternative fueling stations.
+From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads. University campuses generally have good accessibility to alternative fueling stations. However, Hospitals on the outskirts of the city have poor accessibility to alternative fueling stations.
 
 In the northwest of DC, where the household income is the highest, the distribution of alternative fueling stations is relatively even, and residents and schools have good accessibility to them. In the northeast of DC, although the household income is lower, the distribution of alternative fueling stations is still relatively even.
 

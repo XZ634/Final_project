@@ -9,7 +9,7 @@ format:
     embed-resources: true
 ---
 
-### Packages
+## Packages
 
 ```{r}
 library(tidyverse)
@@ -28,7 +28,11 @@ library(vip)
 
 ## 1. Background and Literature Review
 
-The increasingly prominent environmental issues pose a significant challenge to human survival. The utilization of new energy sources, including renewable energy generation and the use of new energy vehicles, has highlighted the potential of policy solutions to address these environmental challenges. To what extent can the use of clean energy improve environmental quality? This question drives us to conduct research, aiming to establish a model that utilizes relevant data on new energy usage to predict environmental quality, especially focusing on air quality. Additionally, we seek to provide policy recommendations for further investment in new energy infrastructure.
+The increasingly prominent environmental issues pose a significant challenge to human survival. The utilization of new energy sources, including renewable energy generation and the use of new energy vehicles, has highlighted the potential of policy solutions to address these environmental challenges. To what extent can the use of clean energy improve environmental quality? This question drives us to conduct this research.
+
+There is a wealth of literature on the relationship between green energy and environmental quality. Millstein et al. (2017) argue that from 2007 to 2015, the deployment of wind and solar energy in the United States significantly reduced combustion-based electricity production, thereby decreasing overall emissions from the power sector. Their findings indicate cumulative air-quality benefits valued between \$29.7 billion and \$112.8 billion, primarily due to avoided premature deaths. Ganda (2018) proposes that renewable energy adoption is playing a critical role in reducing the growth in the emission of harmful gases and combatting climate change. Caglar and Askin (2023) find that economic growth and competitive industrial performance have a negative impact on environmental quality, whereas renewable energy consumption and human capital can enhance the load capacity factor. Guo et al. (2021) conclude that, in the long term, income, environmental innovation, energy industry investment, and renewable energy consumption play significant roles in explaining CO2 emissions in China. Zafar et al. (2020) argue that renewable energy has a positive impact on both environmental quality and economic growth. Besides, Evidence from Saudi Arabia shows a long-run negative and significant association between renewable energy and ecological footprint (Kahouli et al., 2022).
+
+Evidence from around the world shows that green energy contributes to improved environmental quality. However, existing research heavily relies on macro-level data, like energy industry investment, overlooking the micro aspects of green energy consumption. Additionally, there hasn't been enough research attention given to the role of new energy cars. To address this research gap, we aim to utilize the number of alternative fueling stations to predict air quality. Furthermore, we intend to develop a model to forecast the demand for alternative fueling stations, which is crucial for urban management in the era of new energy.
 
 ## 2. Structure of This Article
 
@@ -38,7 +42,11 @@ We initially attempted this approach, but found it to be quite messy. Instead, w
 
 However, the two machine learning analyses rely on a single, large combined dataset called "green," making them more consistent. Therefore, we will include a separate section before the machine learning analyses to conduct data wrangling and exploratory analysis for this commonly used dataset.
 
+These two machine learning models are aligned with our research question. The first one is a decision tree model used to predict air quality, while the second one is a Lasso regression model used to predict the number of alternative fueling stations. Both models hold significant policy relevance in the fields of environmental and urban policy.
+
 # II. Data Sources
+
+For visualization purposes, the data we used only includes counties from the continental United States.
 
 ### [A. Air Quality Index Annual Summary Data (2021)](https://www.epa.gov/outdoor-air-quality-data)
 
@@ -735,3 +743,18 @@ lasso_final_green %>%
 ```
 
 The four most significant predictors are population, utility gas consumption, population with Bachelor's degree, and electricity consumption. All of these variables have a clear correlation with the demand for alternative fueling stations. Additionally, the remaining key, albeit less significant, factors are primarily related to modes of transportation, indicating that citizens' preferences for cleaner transportation methods such as public transportation, cycling, motorcycling, and walking are also relevant to their demand for alternative fueling stations.
+
+
+## References
+
+Millstein, D., Wiser, R., Bolinger, M. et al. The climate and air-quality benefits of wind and solar power in the United States. Nat Energy 2, 17134 (2017). [https://doi.org/10.1038/nenergy.2017.134](https://doi.org/10.1038/nenergy.2017.134)
+
+Ganda, F. (2018). The influence of green energy investments on environmental quality in OECD countries. Environmental Quality Management, 28(2), 17–29. [https://doi.org/10.1002/tqem.21595](https://doi.org/10.1002/tqem.21595)
+
+Caglar, A. E., & Askin, B. E. (2023). A path towards green revolution: How do competitive industrial performance and renewable energy consumption influence environmental quality indicators? Renewable Energy, 205, 273–280. [https://doi.org/10.1016/j.renene.2023.01.080](https://doi.org/10.1016/j.renene.2023.01.080)
+
+Guo, J., Zhou, Y., Ali, S., Shahzad, U., & Cui, L. (2021). Exploring the role of green innovation and investment in energy for environmental quality: An empirical appraisal from provincial data of China. Journal of Environmental Management, 292, 112779–112779. [https://doi.org/10.1016/j.jenvman.2021.112779](https://doi.org/10.1016/j.jenvman.2021.112779)
+
+Zafar, M. W., Shahbaz, M., Sinha, A., Sengupta, T., & Qin, Q. (2020). How renewable energy consumption contribute to environmental quality? The role of education in OECD countries. Journal of Cleaner Production, 268, 122149-. [https://doi.org/10.1016/j.jclepro.2020.122149](https://doi.org/10.1016/j.jclepro.2020.122149)
+
+Kahouli, B., Hamdi, B., Nafla, A., & Chabaane, N. (2022). Investigating the relationship between ICT, green energy, total factor productivity, and ecological footprint: Empirical evidence from Saudi Arabia. Energy Strategy Reviews, 42, 100871-. [https://doi.org/10.1016/j.esr.2022.100871](https://doi.org/10.1016/j.esr.2022.100871)

@@ -9,49 +9,6 @@ format:
     embed-resources: true
 ---
 
-# I. Introduction
-
-## 1. Background and Literature Review
-
-The increasingly prominent environmental issues pose a significant challenge to human survival. The utilization of new energy sources, including renewable energy generation and the use of new energy vehicles, has highlighted the potential of policy solutions to address these environmental challenges. To what extent can the use of clean energy improve environmental quality? This question drives us to conduct research, aiming to establish a model that utilizes relevant data on new energy usage to predict environmental quality, especially focusing on air quality. Additionally, we seek to provide policy recommendations for further investment in new energy infrastructure.
-
-## 2. Structure of This Article
-
-
-
-# 2. Data Sources
-
-### [A. Air Quality Index Annual Summary Data (2021)](https://www.epa.gov/outdoor-air-quality-data)
-
-This data is from the U.S. Environmental Protection Agency. We intend to use the proportion of "good days" as a proxy of air quality in each county in 2021. We downloaded Pre-generated data file for 2021 by clicking Pre-generated Data Files -\> Table of Annual Summary Data -\> annual_aqi_by_county_2021.zip. This zip document contains only one csv document "annual_aqi_by_county_2021.csv" and we are using this one.
-
-### [B. Alternative Fueling Station Locations (2021)](https://catalog.data.gov/dataset/alternative-fueling-station-locations-422f2)
-
-This dataset was created by The Alternative Fuels Data Center (AFDC). It contains the latitude and longitude information of each alternative fueling station across the U.S. It can be seen as a proxy of the usage of light-duty vehicles in each county in 2021. we downloaded the 2021 dataset, "Alternative Fuel Stations 2021.csv" ,under "Downloads & Resources".
-
-### [C. Energy Generation: Form EIA-923 (2021)](https://www.eia.gov/electricity/data/eia923/)
-
-This form collects detailed data -- monthly and annually -- on electricity generation from all power plants in the U.S.. It contains variables about plant name, plant code, fuel type, amount of electricity generation, amount of electricity consumed, and thus net generation, etc. Each plant could have more than one row if it uses different fuel types. By combining it with Form EIA-860, we can connect energy generations to corresponding plants. We downloaded the zip document with year of "2021: EIA-923" on this website. It contains three documents and we are using the one called "EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx" because it contains annually net electricity generation data.
-
-### [D. Power Plant: Form EIA-860 (2021)](https://www.eia.gov/electricity/data/eia860/)
-
-The Form EIA-860 collects plant-level specific information about existing and planned electric power plants with 1 megawatt or greater of combined nameplate capacity. It contains plant name, plant code, and geographical information, including county, state, longitude, latitude, etc. It can be joined with Form EIA-923 to calculate the amount of energy generation at the county level. We downloaded the zip document with year of 2021 on this website. It contains 13 documents and we are using the one called "2\_\_\_Plant_Y2021.xlsx" which provides plant-level information.
-
-### [E. NCHS Urban-Rural Classification (2013)](https://www.cdc.gov/nchs/data_access/urban_rural.htm)
-
-Given that urbanization is an important factor for air quality and demands for alternative fueling stations, we add NCHS Urban-Rural Classification as a proxy of urbanization level. There are six categories for all counties in the U.S. ranging from 1 (large central metro) to 6 (non-core). We downloaded "NCHSURCodes2013.xlsx" at the bottom of the website, under "Data Files and Documentation". Since 2013 version is the lastest, we will use the 2013 code. We believe that the urbanization levels of counties will not change significantly during a decade.
-
-### F. DC public facilities
-
-To explore the accessibility to alternative fueling stations in DC, we downloaded geojson documents of [hospitals](https://hub.arcgis.com/datasets/5de949289bb248fc842f3b8324f28eda_0/explore), [public schools](https://hub.arcgis.com/datasets/4ac321b2d409438ebd76a6569ad94034_5/explore), [charter schools](https://hub.arcgis.com/datasets/a3832935b1d644e48c887e6ec5a65fcd_1/explore), [university/college campuses](https://hub.arcgis.com/datasets/2cc7c37a61554ad181c6356023c8532c_13/explore), and [governmental buildings](https://hub.arcgis.com/datasets/f04fe795a8dd4f04a73bcc1250e20a0a_77/explore) from their websites respectively. All data are provided by Open Data DC. Besides, we used roads() to get DC roads data.
-
-### G. American Community Survey (2017-2021)
-
-We used some socio-economic data from ACS, including household income (B19013_001), population (B01003_001), Bachelor's degree (B15003_022E), workers age 16+ (B08007_001E). These variables can provide some basic economic and social information of each county.
-Besides, we used energy consumption information from ACS, including utility gas (B25040_002E), bottled gas (B25040_003E), electricity (B25040_004E), oil (B25040_005E), coal (B25040_006E), and wood (B25040_007E). We believe that energy consumption is a critical predictor for air quality.
-Moreover, we used transportation to work data, including drive alone (B08301_003E), carpooled (B08301_004E), public transportation (B08301_010E), taxicab (B08301_016E), motorcycled (B08301_017E), bicycled (B08301_018E), and walked (B08301_019E). We believe the means of transportation also have huge impact on both air quality and the needs for alternative fueling stations.
-We created a function to get above data through API. This function is shown in Part 4.
-
 ### Packages
 
 ```{r}
@@ -67,19 +24,57 @@ library(tidymodels)
 library(vip)
 ```
 
-# III. Exploratory Data Analysis
+# I. Introduction
 
-## 1. Overview: Green Electricity Generation In The U.S.
+## 1. Background and Literature Review
 
-### A. Data wrangling
+The increasingly prominent environmental issues pose a significant challenge to human survival. The utilization of new energy sources, including renewable energy generation and the use of new energy vehicles, has highlighted the potential of policy solutions to address these environmental challenges. To what extent can the use of clean energy improve environmental quality? This question drives us to conduct research, aiming to establish a model that utilizes relevant data on new energy usage to predict environmental quality, especially focusing on air quality. Additionally, we seek to provide policy recommendations for further investment in new energy infrastructure.
+
+## 2. Structure of This Article
+
+Our first two analyses are exploratory. The first one involves visualizing green electricity generation at the county and state levels, while the second one focuses on mapping alternative fueling stations in DC. These analyses are unrelated to each other and to the two subsequent machine learning analyses. Therefore, we have decided to adopt a more flexible structure, where we will not have a separate section for Data Wrangling and Exploratory Data Analysis to cover all data cleaning and new variable creation.
+
+We initially attempted this approach, but found it to be quite messy. Instead, we believe a more appropriate way to present our findings is to include the data wrangling of the first two independent exploratory analyses directly within their respective analysis sections. This maintains their internal consistency and logical flow.
+
+However, the two machine learning analyses rely on a single, large combined dataset called "green," making them more consistent. Therefore, we will include a separate section before the machine learning analyses to conduct data wrangling and exploratory analysis for this commonly used dataset.
+
+# II. Data Sources
+
+### [A. Air Quality Index Annual Summary Data (2021)](https://www.epa.gov/outdoor-air-quality-data)
+
+This data is sourced from the U.S. Environmental Protection Agency. Our intention is to use the proportion of "good days" as a proxy for air quality in each county in 2021. We obtained the pre-generated data file for 2021 by navigating to Pre-generated Data Files -> Table of Annual Summary Data -> annual_aqi_by_county_2021.zip. This zip document contains only one CSV file, "annual_aqi_by_county_2021.csv", which is the one we are using.
 
 ```{r}
-#read electric power plants data
-plants <- read_excel("data/2___Plant_Y2021.xlsx", skip=1) %>% 
+c_aqi <- read.csv("data/annual_aqi_by_county_2021.csv") %>% 
   janitor::clean_names() %>% 
-  select(plant_code, latitude, longitude)
+  select(state, county, days_with_aqi, good_days) %>% 
+#use the percent of good days to indicate air quality
+  mutate(good_days_rate = 100*good_days/days_with_aqi) %>% 
+  select(state, county, good_days_rate)
+```
 
-#read electricity generation data
+### [B. Alternative Fueling Station Locations (2021)](https://catalog.data.gov/dataset/alternative-fueling-station-locations-422f2)
+
+This dataset was created by The Alternative Fuels Data Center (AFDC). It contains the latitude and longitude information of each alternative fueling station across the U.S. It can be seen as a proxy of the usage of light-duty vehicles in each county in 2021. we downloaded the 2021 dataset, "Alternative Fuel Stations 2021.csv" ,in "Downloads & Resources" section.
+
+```{r}
+alt_fuel_stations <- read.csv("data/alt_fuel_stations (Jul 29 2021).csv") %>%
+  janitor::clean_names() %>%
+  filter(
+    !is.na(longitude),
+    !is.na(latitude)
+  ) %>% 
+  st_as_sf(coords = c("longitude","latitude")) %>%  
+  st_set_crs(4326) %>% 
+  select(geometry) %>% 
+  mutate(facility = "Alternative Fueling Station")
+```
+
+### [C. Energy Generation: Form EIA-923 (2021)](https://www.eia.gov/electricity/data/eia923/)
+
+This form collects detailed data, both monthly and annually, on electricity generation from all power plants in the U.S.. It includes variables such as plant name, plant code, fuel type, amount of electricity generated, amount of electricity consumed, and net generation, among others. Each plant could have more than one row if it uses different fuel types. By combining this data with Form EIA-860, we can link energy generation to corresponding plants. We downloaded the zip file for the year "2021: EIA-923" from this website, which contains three documents. We are using the one called "EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx" because it contains annual net electricity generation data.
+
+```{r}
 elec_generation <- read_excel("data/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx", 
                          sheet = 1, skip = 5) %>% 
   janitor::clean_names() %>% 
@@ -87,134 +82,39 @@ elec_generation <- read_excel("data/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Rev
          fuel_type = aer_fuel_type_code,
          net_generation = net_generation_megawatthours) %>% 
   select(plant_code, fuel_type, net_generation) 
-
-#combine datasets
-elec_generation <- left_join(x = elec_generation,y = plants,by = "plant_code") %>% 
-  filter(
-    !is.na(longitude),
-    !is.na(latitude)
-  ) %>% 
-  st_as_sf(coords = c("longitude","latitude")) %>% 
-  st_set_crs(4326) 
 ```
 
-### County-level distribution of green electricity generation
+### [D. Power Plant: Form EIA-860 (2021)](https://www.eia.gov/electricity/data/eia860/)
+
+The Form EIA-860 collects specific information about existing and planned electric power plants with a combined nameplate capacity of 1 megawatt or greater. It includes details such as plant name, plant code, and geographical information like county, state, longitude, and latitude. This data can be combined with Form EIA-923 to calculate energy generation at the county level. We downloaded the zip file for the year 2021 from the website, which contains 13 documents. We are using the "2___Plant_Y2021.xlsx" file, which provides plant-level information.
 
 ```{r}
-#filter green electricity generation
-green_elec_generation <- elec_generation %>% 
-  filter(fuel_type %in% c("SUN","GEO","HPS","HYC","MLG","ORW","WND","WWW"))
-
-#read counties data
-counties <- counties(cb = TRUE, progress_bar = FALSE) %>%
+plants <- read_excel("data/2___Plant_Y2021.xlsx", skip=1) %>% 
   janitor::clean_names() %>% 
-  st_transform(crs = 4326) %>%
-  filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
-  select(geoid, name, namelsad, stusps, state_name, geometry)
-
-#use spatial join to get green electricity generated in each county
-c_green_elec <- st_join(counties, green_elec_generation) %>% 
-  st_drop_geometry() %>% 
-  group_by(geoid) %>% 
-  summarize(green_elec = sum(net_generation)) %>% 
-  mutate(green_elec = replace_na(green_elec, 0))
-
-#combine datasets to get geometry for c_green_elec
-c_green_elec <- left_join(counties, c_green_elec, by = "geoid")
-
-#visualize green electricity generation at county-level
-ggplot()+
-  geom_sf(c_green_elec, mapping = aes(fill = log(green_elec)))+ 
-  scale_fill_gradient(
-    low = "lightgreen",
-    high = "darkgreen",
-    na.value = "lightyellow"
-  )+
-  labs(title = "Net Renewable Electricity Generation By County",
-       subtitle = "logged megawatthours (white indicates zero generation)",
-       caption = "U.S. Energy Information Administration",
-       fill = "") +
-  theme_void()
+  select(plant_code, latitude, longitude)
 ```
 
-From the graph, we can see that green electricity production is mainly distributed along the East Coast, the West, and the Northeast in the United States, while it is relatively lacking in the center.
+### [E. NCHS Urban-Rural Classification (2013)](https://www.cdc.gov/nchs/data_access/urban_rural.htm)
 
-### State-level distribution of green electricity generation
+Given the significance of urbanization in determining air quality and the demand for alternative fueling stations, we included the NCHS Urban-Rural Classification as a measure of urbanization level. This classification system categorizes all U.S. counties into six groups, ranging from 1 (large central metro) to 6 (non-core). We obtained the "NCHSURCodes2013.xlsx" file from the website's "Data Files and Documentation" section, as the 2013 version is the latest available. We assume that county urbanization levels remain relatively stable over a decade.
 
 ```{r}
-s_green_elec <- c_green_elec %>% 
-  st_drop_geometry() %>% 
-  group_by(stusps) %>% 
-  summarise(green_elec = sum(green_elec))
-
-#read states data
-states <- states(cb = TRUE, progress_bar = FALSE) %>% 
+c_urban <- read_xlsx("data/NCHSURCodes2013.xlsx") %>% 
   janitor::clean_names() %>% 
-  st_transform(crs = 4326) %>%
-  filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
-  select(stusps, geometry)
-
-#combine datasets to get geometry for s_green_elec
-s_green_elec <- left_join(states, s_green_elec, by = "stusps")
-
-#filter plants with green electricity generation within states
-green_elec_generation <- st_filter(green_elec_generation, states)
-
-#identify 3 most common fuel type
-green_elec_generation %>% 
-  group_by(fuel_type) %>% 
-  summarise(n = n()) %>% 
-  arrange(-n)
-
-#visualize green electricity generation at state-level
-ggplot()+
-  geom_sf(s_green_elec, mapping = aes(fill = green_elec/1000))+ 
-  scale_fill_gradient(
-    low = "lightgreen",
-    high = "darkgreen"
-  )+
-  geom_sf(data = green_elec_generation %>% 
-            filter(fuel_type %in% c("HYC", "SUN", "WND")),
-          mapping = aes(color = fuel_type), size=0.3)+
-  labs(title = "Net renewable electricity generation by state",
-       subtitle = "1000 megawatthours",
-       caption = "U.S. Energy Information Administration",
-       fill = "",
-       color = "plants with green electricity generation") +
-  scale_color_manual(
-    name = "Fuel Type",
-    labels = c("HYC" = "Hydroelectric Conventional", "SUN" = "Solar", "WND" = "Wind"),
-    values = c("HYC" = "red", "SUN" = "yellow", "WND" = "blue")) +
-  theme_void()
+  select(state_abr, county_name, urban = x2013_code) %>% 
+  #reverse coding, using 1-6 to represent increasing urban rate
+  mutate(urban = 7 - urban) 
 ```
 
-From the graph, we can see that California, Washington, and Texas are leading in green electricity production. Additionally, power plants of different energy types have distinct spatial distribution characteristics. Solar energy is mainly concentrated on the East and West Coasts, wind energy is mainly concentrated in the central inland areas, while the distribution of hydroelectric conventional is more dispersed.
+### F. DC Public Facilities
+
+To explore the accessibility to alternative fueling stations in DC, we downloaded geojson documents of [hospitals](https://hub.arcgis.com/datasets/5de949289bb248fc842f3b8324f28eda_0/explore), [public schools](https://hub.arcgis.com/datasets/4ac321b2d409438ebd76a6569ad94034_5/explore), [charter schools](https://hub.arcgis.com/datasets/a3832935b1d644e48c887e6ec5a65fcd_1/explore), [university/college campuses](https://hub.arcgis.com/datasets/2cc7c37a61554ad181c6356023c8532c_13/explore), and [governmental buildings](https://hub.arcgis.com/datasets/f04fe795a8dd4f04a73bcc1250e20a0a_77/explore) from their websites respectively. All data are provided by Open Data DC. Besides, we used sf::roads() to get DC roads data.
 
 ```{r}
-#remove used dataframes
-rm(green_elec_generation, plants, s_green_elec)
-```
-
-## A micro case: alternative fueling stations in DC
-
-### Read and combine datasets
-
-```{r}
-#read all datasets
 dc_roads <- roads(state = "DC", 
                   county = "District of Columbia",
                   progress_bar=F) %>% 
   st_transform(crs = 4269)
-
-dc_income <- get_acs(
-  geography = "tract",
-  variables = "B19013_001",
-  state = "DC",
-  county = "District of Columbia",
-  geometry = TRUE,
-  year = 2021,
-  progress = FALSE
-)
 
 dc_hospitals <- st_read("data/DC_Hospitals.geojson",
                         quiet=T) %>% 
@@ -245,18 +145,159 @@ dc_gov <- st_read("data/District_Government_Owned_Structures.geojson",
   st_transform(crs = 4326) %>% 
   select(geometry) %>% 
   mutate(facility = "Governmental Building")
+```
 
-alt_fuel_stations <- read.csv("data/alt_fuel_stations (Jul 29 2021).csv") %>%
-  janitor::clean_names() %>%
+### G. American Community Survey (2017-2021)
+
+We utilized socio-economic data from the American Community Survey (ACS), including household income (B19013_001), population (B01003_001), Bachelor's degree (B15003_022E), and workers age 16+ (B08007_001E). These variables offer basic economic and social insights for each county.
+
+Additionally, we incorporated energy consumption data from the ACS, encompassing utility gas (B25040_002E), bottled gas (B25040_003E), electricity (B25040_004E), oil (B25040_005E), coal (B25040_006E), and wood (B25040_007E). We consider energy consumption a crucial predictor for air quality.
+
+Furthermore, we included transportation-to-work data, such as drive alone (B08301_003E), carpooled (B08301_004E), public transportation (B08301_010E), taxicab (B08301_016E), motorcycled (B08301_017E), bicycled (B08301_018E), and walked (B08301_019E). We believe transportation methods significantly impact both air quality and the demand for alternative fueling stations.
+
+To combine above data with a large dataframe named "green," we developed a function using an API. Since we don't have "green" here in this step, it's not convenient to display it here, but you can view it in section IV/1/B.
+
+Additionally, we utilized ACS data to obtain household income in DC.
+
+```{r}
+dc_income <- get_acs(
+  geography = "tract",
+  variables = "B19013_001",
+  state = "DC",
+  county = "District of Columbia",
+  geometry = TRUE,
+  year = 2021,
+  progress = FALSE
+)
+```
+
+# III. Two Spatial Exploratory Data Analyses
+
+## 1. Overview: Green Electricity Generation In The U.S.
+
+With the increasing global awareness of environmental protection and the drive for environmental movements, green energy generation is becoming a trend. What is the spatial distribution of green energy generation in the United States? Which states are leading in green energy generation? What are the different geographical distribution characteristics of different green energy generation methods? In this section, we attempt to address these questions.
+
+### A. Data wrangling
+
+```{r}
+#combine datasets
+elec_generation <- left_join(x = elec_generation,y = plants,by = "plant_code") %>% 
   filter(
     !is.na(longitude),
     !is.na(latitude)
   ) %>% 
-  st_as_sf(coords = c("longitude","latitude")) %>%  
-  st_set_crs(4326) %>% 
-  select(geometry) %>% 
-  mutate(facility = "Alternative Fueling Station")
+  st_as_sf(coords = c("longitude","latitude")) %>% 
+  st_set_crs(4326) 
 
+#filter green electricity generation
+green_elec_generation <- elec_generation %>% 
+  filter(fuel_type %in% c("SUN","GEO","HPS","HYC","MLG","ORW","WND","WWW"))
+
+#read counties data
+counties <- counties(cb = TRUE, progress_bar = FALSE) %>%
+  janitor::clean_names() %>% 
+  st_transform(crs = 4326) %>%
+  filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
+  select(geoid, name, namelsad, stusps, state_name, geometry)
+
+#use spatial join to get green electricity generated in each county
+c_green_elec <- st_join(counties, green_elec_generation) %>% 
+  st_drop_geometry() %>% 
+  group_by(geoid) %>% 
+  summarize(green_elec = sum(net_generation)) %>% 
+  mutate(green_elec = replace_na(green_elec, 0))
+
+#combine datasets to get geometry for c_green_elec
+c_green_elec <- left_join(counties, c_green_elec, by = "geoid")
+
+#sum county-level data to state level
+s_green_elec <- c_green_elec %>% 
+  st_drop_geometry() %>% 
+  group_by(stusps) %>% 
+  summarise(green_elec = sum(green_elec))
+
+#read states data
+states <- states(cb = TRUE, progress_bar = FALSE) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs = 4326) %>%
+  filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
+  select(stusps, geometry)
+
+#combine datasets to get geometry for s_green_elec
+s_green_elec <- left_join(states, s_green_elec, by = "stusps")
+
+#filter plants with green electricity generation within states
+green_elec_generation <- st_filter(green_elec_generation, states)
+
+#identify 3 most common fuel types
+green_elec_generation %>% 
+  group_by(fuel_type) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n)
+```
+
+In state-level visualization, we will explore the distribution pattern of the three most common green electricity fuel types: sun, hydroelectric conventional, and wind.
+
+### B. County-level distribution of green electricity generation
+
+```{r}
+#visualize green electricity generation at county-level
+ggplot()+
+  geom_sf(c_green_elec, mapping = aes(fill = log(green_elec)))+ 
+  scale_fill_gradient(
+    low = "lightgreen",
+    high = "darkgreen",
+    na.value = "lightyellow"
+  )+
+  labs(title = "Net Renewable Electricity Generation By County",
+       subtitle = "logged megawatthours (white indicates zero generation)",
+       caption = "U.S. Energy Information Administration",
+       fill = "") +
+  theme_void()
+```
+
+From the graph, we can see that green electricity production is mainly distributed along the East Coast, the West, and the Northeast in the United States, while it is relatively lacking in the center.
+
+### C. State-level distribution of green electricity generation
+
+```{r}
+#visualize green electricity generation at state-level
+ggplot()+
+  geom_sf(s_green_elec, mapping = aes(fill = green_elec/1000))+ 
+  scale_fill_gradient(
+    low = "lightgreen",
+    high = "darkgreen"
+  )+
+  geom_sf(data = green_elec_generation %>% 
+            filter(fuel_type %in% c("HYC", "SUN", "WND")),
+          mapping = aes(color = fuel_type), size=0.3)+
+  labs(title = "Net renewable electricity generation by state",
+       subtitle = "1000 megawatthours",
+       caption = "U.S. Energy Information Administration",
+       fill = "",
+       color = "plants with green electricity generation") +
+  scale_color_manual(
+    name = "Fuel Type",
+    labels = c("HYC" = "Hydroelectric Conventional", "SUN" = "Solar", "WND" = "Wind"),
+    values = c("HYC" = "red", "SUN" = "yellow", "WND" = "blue")) +
+  theme_void()
+```
+
+From the graph, we can see that California, Washington, and Texas are leading in green electricity production. Additionally, power plants of different energy types have distinct spatial distribution characteristics. Solar energy is mainly concentrated on the East and West Coasts, wind energy is mainly concentrated in the central inland areas, while the distribution of hydroelectric conventional is more dispersed.
+
+```{r}
+#remove used dataframes
+rm(green_elec_generation, plants, s_green_elec)
+```
+
+## 2. A Micro Case: Alternative Fueling Stations In DC
+
+Let's move from the map of the United States back to DC. What are the geographical distribution characteristics of alternative fueling stations in DC? Which socioeconomic groups have poor accessibility to them? Which public facilities are often adjacent to them? In this section, we intend to explore these micro questions.
+
+### A. Data wrangling
+
+```{r}
+#read boundry data
 dc_boundary <- states(cb = TRUE, progress_bar = FALSE) %>%
   filter(STUSPS == "DC") %>% 
   st_transform(crs = 4326)
@@ -273,7 +314,7 @@ facilities <- bind_rows(dc_hospitals,
                         dc_alt_fuel_stations) 
 ```
 
-### Data visualization
+### B. Data visualization
 
 ```{r}
 #mapping facilities
@@ -302,17 +343,11 @@ ggplot()+
     color = "Facilities") 
 ```
 
-From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads.
+From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads. University campuses generally have good accessibility to alternative fueling stations. Hospitals in the northern part of DC are all near alternative fueling stations, while the three hospitals in the south are relatively far from them.
 
-University campuses generally have good accessibility to alternative fueling stations. Hospitals in the northern part of DC are all near alternative fueling stations, while the three hospitals in the south are relatively far from them.
+In the northwest of DC, where the household income is the highest, the distribution of alternative fueling stations is relatively even, and residents and schools have good accessibility to them. In the northeast of DC, although the household income is lower, the distribution of alternative fueling stations is still relatively even.
 
-In the northwest of DC, where the household income is the highest, the distribution of alternative fueling stations is relatively even, and residents and schools have good accessibility to them.
-
-In the northeast of DC, although the household income is lower, the distribution of alternative fueling stations is still relatively even.
-
-In the eastern part, where the household income further decreases, despite the presence of numerous schools and government buildings, there are only few and concentrated alternative fueling stations, resulting in poor accessibility.
-
-In the southern part, where the household income is low and there are many schools, hospitals, and government buildings, the number of alternative fueling stations is few and mainly located along the main roads, leading to poor accessibility.
+In the eastern part, where the household income further decreases, despite the presence of numerous schools and government buildings, there are only few and concentrated alternative fueling stations, resulting in poor accessibility. In the southern part, where the household income is low and there are many schools, hospitals, and government buildings, the number of alternative fueling stations is few and mainly located along the main roads, leading to poor accessibility.
 
 Overall, alternative fueling stations are concentrated in the downtown area of DC, and the household income of neighborhoods is highly correlated with the accessibility of alternative fueling stations. Groups with disadvantaged socio-economic status face difficulties in accessing new energy charging facilities.
 
@@ -330,9 +365,11 @@ rm(dc_boundary,
    facilities)
 ```
 
-## Combine datasets for machine learning
+# IV. Data Wrangling and Exploratory Data Analysis For Machine Learning
 
-### Combine existing data
+## 1. Data Cleaning
+
+### A. Combine existing data
 
 ```{r}
 # count the number of alternative fueling stations in each county
@@ -351,38 +388,11 @@ c_total_elec <- st_join(counties, elec_generation) %>%
 #combine all county-level datasets
 green <- left_join(c_green_elec, c_total_elec, by = "geoid")
 green <- left_join(green, c_fueling_stations, by = "geoid")
-```
-
-### Combine air quality data
-
-```{r}
-#read air quality index data 
-c_aqi <- read.csv("data/annual_aqi_by_county_2021.csv") %>% 
-  janitor::clean_names() %>% 
-  select(state, county, days_with_aqi, good_days) %>% 
-#use the percent of good days to indicate air quality
-  mutate(good_days_rate = 100*good_days/days_with_aqi) %>% 
-  select(state, county, good_days_rate)
-
-#combine datasets
 green <- left_join(green, c_aqi, by = c("state_name" = "state", "name" = "county"))
-```
-
-### Combine urban categories data
-
-```{r}
-#read urban categories data
-c_urban <- read_xlsx("data/NCHSURCodes2013.xlsx") %>% 
-  janitor::clean_names() %>% 
-  select(state_abr, county_name, urban = x2013_code) %>% 
-  #reverse coding, using 1-6 to represent increasing urban rate
-  mutate(urban = 7 - urban) 
-
-#combine datasets
 green <- left_join(green, c_urban, by = c("stusps" = "state_abr", "namelsad" = "county_name"))
 ```
 
-### Combine ACS data
+### B. Combine ACS data
 
 ```{r}
 #create a function
@@ -445,7 +455,7 @@ variables <- list(
 pwalk(variables, acs_combine)
 ```
 
-### Remove irrelevant features
+### C. Remove irrelevant features
 
 ```{r}
 #remove irrelavant variables
@@ -464,13 +474,12 @@ rm(alt_fuel_stations,
    variables)
 ```
 
-### Generate new variables
+### D. Generate new variables
 
 ```{r}
 #generate new variables
 green <- green %>% 
   mutate(green_elec_prop = 100*green_elec/total_elec) %>% 
-  mutate(green_elec_prop = if_else(is.na(green_elec_prop), 0, green_elec_prop)) %>% 
   mutate(labor_prop = 100*labor/population) %>% 
   mutate(bachelor_prop = 100*bachelor/population) %>% 
   mutate(totoal_energy_cons = utility_gas+bottled_gas+electricity+oil+coal+wood) %>% 
@@ -479,14 +488,59 @@ green <- green %>%
   mutate(clean_trans_prop = 100*(public_trans+bicycled+walked)/labor) %>% 
   mutate(auto_trans_prop = 100*(drive_alone+carpooled+taxicab+motorcycled)/labor) %>% 
   select(-totoal_energy_cons) %>% 
-  mutate(afs_per_1000_dirvers = 1000*alt_fuel_stations/drive_alone)
+  mutate(afs_per_1000_drivers = 1000*alt_fuel_stations/drive_alone)
 ```
 
-## Can green energy industry help predict air quality?
+## 2. Missing Values and Unexpected Values
 
-Since green energy use (alternative energy cars) and production (green electricity) are more environmental-friendly, we expect that green energy industry contributes to better air quality. In this section, we will use a decision tree model to test this hypothesis.
+### A. Missing values
 
-### Data cleaning
+Good_days_rate has approximately 2000 missing values. This is because the AQI dataset only contains observations from about 1000 counties. Since air quality can vary significantly even within one state, filling NA with the mean air quality is not reasonable. Therefore, we will leave them as NA and only use this variable in the first machine learning model where it serves as the dependent variable. In the second machine learning model, we will drop it to maintain a large sample size.
+
+There are also missing values generated in the previous step. The generated variable green_elec_prop has many missing values because many counties have zero electricity generation. I will replace NA with 0 because logically, for counties without electricity generation, their proportion of green electricity in total electricity generated should be zero.
+
+```{r}
+green <- green %>% 
+  mutate(green_elec_prop = if_else(is.na(green_elec_prop), 0, green_elec_prop)) 
+```
+
+### B. Unexpected values
+
+We have encountered unexpected values in green_elec_prop. It appears that we have obtained negative proportions. However, after considering the definitions of green_elec and total_elec, we realized this is not an error. Both of these variables represent net electricity generation. Since power plants also consume electricity, these values can be negative. Therefore, we will retain those negative proportions.
+
+```{r}
+summary(green$green_elec_prop)
+```
+
+## 3. Exploratory Analysis
+
+Is the green energy industry related to air quality? Before conducting machine learning, we can conduct exploratory analysis using scatter plots.
+
+```{r}
+#The relationship between green electricity generation and air quality
+ggplot(data = green)+
+  geom_point(mapping = aes(x = green_elec, y = good_days_rate))+
+  scale_x_log10()+
+  theme_minimal()
+
+#The relationship between alternative fueling stations density and air quality
+ggplot(data = green)+
+  geom_point(mapping = aes(x = afs_per_1000_drivers, y = good_days_rate))+
+  scale_x_continuous(limits = c(0, 10))+
+  theme_minimal()
+```
+
+In these two graphs, it appears that there is no clear relationship between either green electricity generation or alternative fueling stations density and air quality. In short, there is no clear relationship between the green energy industry and air quality. Therefore, we should conduct a machine learning analysis to further validate our hypothesis.
+
+# V. Machine Learning
+
+## 1. Can Green Energy Industry Help Predict Air Quality?
+
+Since green energy use (alternative energy cars) and production (green electricity) are more environmental-friendly, we expect that green energy industry is a critical predictor for air quality. In this section, we will use a decision tree model to test this hypothesis.
+
+We chose to use a decision tree model because our objective is classification. In other words, we are not concerned about the specific values of the air quality index or the proportion of days recorded as "good." Instead, we are interested in establishing a threshold that distinguishes between "good" and "bad" air quality. For instance, if 80% of days in a county are classified as "good," we generally consider this county to have good air quality.
+
+### A. Data cleaning
 
 ```{r}
 #remove rows with missing air quality
@@ -496,7 +550,7 @@ air <- green %>% filter(!is.na(good_days_rate))
 summary(air$good_days_rate)
 ```
 
-### Dummy variable generation
+### B. Dummy variable generation
 
 The median of good_days_rate is 84, and mean is 81, so I will code air_quality as "good" if good_days_rate \> 80, and as "bad" if good_days_rate \<= 80.
 
@@ -507,10 +561,10 @@ air <- air %>%
   select(-good_days_rate)
 ```
 
-### Decision tree model
+### C. Decision tree model
 
 ```{r}
-set.seed(20240511)
+set.seed(20240508)
 
 #split data
 air_split <- initial_split(data = air, prop = 0.75)
@@ -537,7 +591,7 @@ air_fit <- air_wf %>%
   fit(data = air_train)
 ```
 
-### Evaluate model
+### D. Evaluate model
 
 ```{r}
 #evaluate model
@@ -573,11 +627,10 @@ air_fit %>%
   vip(num_features = 10)
 ```
 
-In this predictive model, the accuracy is 0.668, while precision and recall fall between 0.7 and 0.8, indicating relatively weak predictive power. Therefore, this model does not perform very well in predicting air quality. Additionally, the ten most important predictors do not include green_elec or green_elec_prop. However, drive_alone, clean_energy_prop, and clean_trans_prop are significant predictors. This suggests that while green electricity generation is not a good predictor, the energy consumption structure plays a significant role. Furthermore, citizens' commuting preferences, especially driving and other cleaner transportation methods (public transportation, bicycle, walk), are significant predictors for air quality. However, there is no evidence that the use of new energy vehicles is a significant predictor, as the ten most important predictors do not include afs_per_1000_drivers or alt_fuel_stations.
-
-### Remove irrelevant data
+In this predictive model, the accuracy is 0.681, while precision and recall fall between 0.7 and 0.8, indicating relatively weak predictive power. Therefore, this model does not perform very well in predicting air quality. Additionally, the ten most important predictors do not include green_elec or green_elec_prop. However, drive_alone, carpooled and alt_fuel_stations are significant predictors. This suggests that while green electricity generation is not a good predictor, citizens' commuting preferences, especially the preference for driving, are significant predictors for air quality. Moreover, the use of new energy vehicles is a significant predictor, as the ten most important predictors includes alt_fuel_stations.
 
 ```{r}
+# Remove irrelevant data
 rm(air,
    air_fit,
    air_mod,
@@ -589,24 +642,25 @@ rm(air,
    predictions)
 ```
 
-## What's the key predictors for alternative fueling stations?
+## 2. What's The Key Predictors For Alternative Fueling Stations?
 
 With the development of the green energy car industry, the demand for alternative fueling stations is increasing. Is there a shortage of alternative fueling stations in DC? To address this question, we will establish a lasso regression model to identify the most significant predictors for the number of alternative fueling stations in a city. We believe this model will be highly relevant for policymakers in urban areas.
 
-### Data cleaning
+We are utilizing a lasso regression model because we aim to predict the precise number of alternative fueling stations in each county. We opt for Lasso regression over normal regression because it applies a penalty to prevent overfitting and improve accuracy. To find the optimal model, we will employ hyperparameter tuning and resampling methods.
 
-Due to more than 2000 missing values in good_days_rate, I will remove it to avoid having too small of a sample size.
+### A. Data cleaning
+
+Due to more than 2000 missing values in good_days_rate, we remove it to avoid having too small of a sample size.
 
 ```{r}
 green <- green %>% 
   select(-good_days_rate)
 ```
 
-### Lasso regression model
+### B. Lasso regression model
 
 ```{r}
 #split data
-
 green_split <- initial_split(green, prop = 0.75)
 
 green_train <- training(green_split)
@@ -647,7 +701,7 @@ lasso_res_green %>%
   theme_minimal()
 ```
 
-### Evaluate model
+### C. Evaluate model
 
 ```{r}
 #select best model
@@ -671,7 +725,7 @@ rmse(data = predictions, truth = alt_fuel_stations, estimate=.pred)
 summary(green_test$alt_fuel_stations)
 ```
 
-The RMSE is 28, which is relatively small compared to the range of 1144. However, considering the mean number of alternative fueling stations is 15.55 (since most counties are not urban areas), this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
+The RMSE is 24.4, which is relatively small compared to the range of 1144. However, considering the mean number of alternative fueling stations is 15.52 (since most counties are not urban areas), this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
 
 ```{r}
 #feature inportance

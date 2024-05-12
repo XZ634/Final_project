@@ -126,7 +126,7 @@ green_elec_generation <- st_filter(green_elec_generation, states)
 green_elec_generation %>% 
   group_by(fuel_type) %>% 
   summarise(n = n()) %>% 
-  arrange(n)
+  arrange(-n)
 
 #visualize green electricity generation at state-level
 ggplot()+
@@ -164,7 +164,8 @@ rm(green_elec_generation, plants, s_green_elec)
 ```{r}
 #read all datasets
 dc_roads <- roads(state = "DC", 
-                  county = "District of Columbia") %>% 
+                  county = "District of Columbia",
+                  progress_bar=F) %>% 
   st_transform(crs = 4269)
 
 dc_income <- get_acs(
@@ -177,32 +178,38 @@ dc_income <- get_acs(
   progress = FALSE
 )
 
-dc_hospitals <- st_read("data/DC_Hospitals.geojson") %>% 
+dc_hospitals <- st_read("data/DC_Hospitals.geojson",
+                        quiet=T) %>% 
   st_transform(crs = 4326) %>% 
   select(geometry) %>% 
   mutate(facility = "Hospital")
 
-dc_cha_schs <- st_read("data/DC_Charter_Schools.geojson") %>% 
+dc_cha_schs <- st_read("data/DC_Charter_Schools.geojson",
+                       quiet=T) %>% 
   st_transform(crs = 4326) %>% 
   select(geometry) %>% 
   mutate(facility = "Charter School")
 
-dc_pub_schs <- st_read("data/DC_Public_Schools.geojson") %>% 
+dc_pub_schs <- st_read("data/DC_Public_Schools.geojson",
+                       quiet=T) %>% 
   st_transform(crs = 4326) %>% 
   select(geometry) %>% 
   mutate(facility = "Public School")
 
-dc_campuses <- st_read("data/University_and_College_Campuses.geojson") %>% 
+dc_campuses <- st_read("data/University_and_College_Campuses.geojson",
+                       quiet=T) %>% 
   st_transform(crs = 4326) %>% 
   select(geometry) %>% 
   mutate(facility = "University/College Campus")
 
-dc_gov <- st_read("data/District_Government_Owned_Structures.geojson") %>% 
+dc_gov <- st_read("data/District_Government_Owned_Structures.geojson",
+                  quiet=T) %>% 
   st_transform(crs = 4326) %>% 
   select(geometry) %>% 
   mutate(facility = "Governmental Building")
 
-alt_fuel_stations <- st_read("data/Alternative_Fueling_Stations.geojson") %>% 
+alt_fuel_stations <- st_read("data/Alternative_Fueling_Stations.geojson",
+                             quiet=T) %>% 
   st_transform(crs = 4326) %>% 
   select(geometry) %>% 
   mutate(facility = "Alternative Fueling Station")
@@ -392,7 +399,7 @@ variables <- list(
 )
 
 #combine
-pmap(variables, acs_combine)
+pwalk(variables, acs_combine)
 ```
 
 ### Remove irrelevant features

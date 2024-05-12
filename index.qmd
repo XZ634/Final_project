@@ -83,8 +83,8 @@ alt_fuel_stations <- read.csv("data/alt_fuel_stations (Jul 29 2021).csv") %>%
 This form collects detailed data, both monthly and annually, on electricity generation from all power plants in the U.S.. It includes variables such as plant name, plant code, fuel type, amount of electricity generated, amount of electricity consumed, and net generation, among others. Each plant could have more than one row if it uses different fuel types. By combining this data with Form EIA-860, we can link energy generation to corresponding plants. We downloaded the zip file for the year "2021: EIA-923" from this website, which contains three documents. We are using the one called "EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx" because it contains annual net electricity generation data.
 
 ```{r}
-elec_generation <- read_excel("data/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx", 
-                         sheet = 1, skip = 5) %>% 
+elec_generation <- read_excel("data/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx",
+                              sheet = 1, skip = 5) %>% 
   janitor::clean_names() %>% 
   mutate(plant_code = plant_id,
          fuel_type = aer_fuel_type_code,

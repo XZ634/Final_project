@@ -351,7 +351,7 @@ ggplot()+
     color = "Facilities") 
 ```
 
-From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads. University campuses generally have good accessibility to alternative fueling stations. Hospitals in the northern part of DC are all near alternative fueling stations, while the three hospitals in the south are relatively far from them.
+From the map, we can see that alternative fueling stations are concentrated in the downtown area of DC, while outside the downtown area, they are mainly clustered along the main roads. University campuses generally have good accessibility to alternative fueling stations.However, Hospitals on the outskirts of the city have poor accessibility to alternative fueling stations.
 
 In the northwest of DC, where the household income is the highest, the distribution of alternative fueling stations is relatively even, and residents and schools have good accessibility to them. In the northeast of DC, although the household income is lower, the distribution of alternative fueling stations is still relatively even.
 
@@ -538,7 +538,7 @@ ggplot(data = green)+
   theme_minimal()
 ```
 
-In these two graphs, it appears that there is no clear relationship between either green electricity generation or alternative fueling stations density and air quality. In short, there is no clear relationship between the green energy industry and air quality. Therefore, we should conduct a machine learning analysis to further validate our hypothesis.
+In these two graphs, it appears that there is no clear relationship between either green electricity generation or alternative fueling stations density and air quality. In short, there is no clear relationship between the green energy industry and air quality. Therefore, we should conduct a machine learning analysis to further test our hypothesis.
 
 # V. Machine Learning
 
@@ -560,7 +560,7 @@ summary(air$good_days_rate)
 
 ### B. Dummy variable generation
 
-The median of good_days_rate is 84, and mean is 81, so I will code air_quality as "good" if good_days_rate \> 80, and as "bad" if good_days_rate \<= 80.
+The median of good_days_rate is 84, and mean is 81, so we choose to code air_quality as "good" if good_days_rate \> 80, and as "bad" if good_days_rate \<= 80.
 
 ```{r}
 air <- air %>% 
@@ -742,7 +742,7 @@ lasso_final_green %>%
   vip(num_features = 10)
 ```
 
-The four most significant predictors are population, utility gas consumption, population with Bachelor's degree, and electricity consumption. All of these variables have a clear correlation with the demand for alternative fueling stations. Additionally, the remaining key, albeit less significant, factors are primarily related to modes of transportation, indicating that citizens' preferences for cleaner transportation methods such as public transportation, cycling, motorcycling, and walking are also relevant to their demand for alternative fueling stations.
+The four most significant predictors are population, utility gas consumption, electricity consumption, and population with Bachelor's degree. All of these variables have a clear correlation with the demand for alternative fueling stations. Additionally, the remaining key, albeit less significant, factors are primarily related to modes of transportation, indicating that citizens' preferences for cleaner transportation methods such as public transportation, cycling, motorcycling, and walking are also relevant to their demand for alternative fueling stations.
 
 # VI. Conclusion and Discussion
 
@@ -754,7 +754,7 @@ Conversely, green electricity generation does not emerge as a significant predic
 
 To provide guidance for future investment in infrastructure for new energy vehicles, we developed a lasso regression model to predict the number of alternative fueling stations. The model performs very well, with an RMSE of 24.4 and a range of 1144. However, since the mean number of alternative fueling stations is only 15.52 (due to most counties not being big cities), this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
 
-The key predictors identified are population, utility gas consumption, population with Bachelor’s degrees, and electricity consumption, which align with common sense. What's interesting is that other clean commuting patterns, like public transportation, cycling, motorcycling, and walking, are also important predictors for citizens' demand for alternative fueling stations. The relationship between different transportation preferences deserves further study.
+The key predictors identified are population, utility gas consumption, electricity consumption, and population with Bachelor’s degrees, which align with common sense. What's interesting is that other clean commuting patterns, like public transportation, cycling, motorcycling, and walking, are also important predictors for citizens' demand for alternative fueling stations. The relationship between different transportation preferences deserves further study.
 
 ## 2. Limitations
 

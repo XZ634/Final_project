@@ -1,5 +1,14 @@
 # Data
-data/
+data/annual_aqi_by_county_2021.csv
+data/alt_fuel_stations (Jul 29 2021).csv
+data/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx
+data/2___Plant_Y2021.xlsx
+data/NCHSURCodes2013.xlsx
+data/DC_Hospitals.geojson
+data/DC_Charter_Schools.geojson
+data/DC_Public_Schools.geojson
+data/University_and_College_Campuses.geojson
+data/District_Government_Owned_Structures.geojson
 
 # History files
 .Rhistory

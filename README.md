@@ -1,6 +1,8 @@
 # Final project review
 Xiangming Zeng - xz634, Ruiyang Zhang - rz326, Lingxi Li - ll1188, Xiaorui Shi - xs215
 
+GitHub Pages: https://xz634.github.io/Final_project/
+
 ## Research Overview
 
 ### Research Question

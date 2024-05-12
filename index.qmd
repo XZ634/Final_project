@@ -11,13 +11,23 @@ format:
 
 # I. Introduction
 
-## 1. Background and Literature Review
+## 1. Research question
 
-The increasingly prominent environmental issues pose a significant challenge to human survival. The utilization of new energy sources, including renewable energy generation and the use of new energy vehicles, has highlighted the potential of policy solutions to address these environmental challenges. To what extent can the use of clean energy improve environmental quality? This question drives us to conduct research, aiming to establish a model that utilizes relevant data on new energy usage to predict environmental quality, especially focusing on air quality. Additionally, we seek to provide policy recommendations for further investment in new energy infrastructure.
+The increasingly prominent environmental issues pose a significant challenge to human survival. The utilization of new energy sources, including renewable energy generation and the use of new energy vehicles, has highlighted the potential of policy solutions to address these environmental challenges. To what extent can the use of clean energy improve environmental quality? This question drives us to conduct research, aiming to establish a model that utilizes relevant data on new energy usage to predict environmental quality, especially focusing on air quality. Additionally, we hope to guide new energy infrastructure by predicting quantity of fueling station.
 
-## 2. Structure of This Article
+In the current study, we explore and analyze the distribution of new energy electricity production and its power stations at the county and state levels in the United States for the year 2021, using DC charging stations as a case study to further examine the relationship between charging infrastructure and public facilities. By integrating and utilizing data from the American Community Survey (ACS) and rural-urban classification data, we predict the air quality and the number of charging stations in each county. We employ decision trees to predict air quality and use Lasso regression to predict the number of fueling stations. This research not only provides insights into the geographic distribution of new energy technologies but also supports future energy policy and infrastructure development through an analysis of the interaction between charging infrastructure and socio-economic factors.
 
+## 2. Literature Review
 
+The escalating environmental issues fueled by traditional energy consumption have prompted a global shift towards renewable energy and new energy vehicles (NEVs). This literature review examines the potential of these technologies to improve air quality and provides policy recommendations based on empirical evidence.
+
+### Renewable Energy
+
+Renewable energy sources, including wind and solar power, are recognized as effective means to reduce air pollution and greenhouse gas emissions. Millstein et al. (2017) offer a comprehensive analysis, revealing that from 2007 to 2015, the deployment of wind and solar energy in the United States significantly reduced combustion-based electricity production, thereby decreasing overall emissions from the power sector. Their findings indicate cumulative air-quality benefits valued between \$29.7 billion and \$112.8 billion, primarily due to avoided premature deaths.
+
+### New Energy Vehicles
+
+Borlaug et al. (2023) discuss the role of public electric vehicle charging infrastructure in the United States, noting that local adoption rates of EVs are a strong predictor of charging station utilization. Their regression analysis suggests that increased charging power and a larger local charging network correlate with higher utilization rates, which can further promote broader adoption of EVs. This study underscores the importance of strategic placement and planning in the expansion of EV infrastructure to enhance its utility and environmental impact.
 
 # 2. Data Sources
 
@@ -47,10 +57,7 @@ To explore the accessibility to alternative fueling stations in DC, we downloade
 
 ### G. American Community Survey (2017-2021)
 
-We used some socio-economic data from ACS, including household income (B19013_001), population (B01003_001), Bachelor's degree (B15003_022E), workers age 16+ (B08007_001E). These variables can provide some basic economic and social information of each county.
-Besides, we used energy consumption information from ACS, including utility gas (B25040_002E), bottled gas (B25040_003E), electricity (B25040_004E), oil (B25040_005E), coal (B25040_006E), and wood (B25040_007E). We believe that energy consumption is a critical predictor for air quality.
-Moreover, we used transportation to work data, including drive alone (B08301_003E), carpooled (B08301_004E), public transportation (B08301_010E), taxicab (B08301_016E), motorcycled (B08301_017E), bicycled (B08301_018E), and walked (B08301_019E). We believe the means of transportation also have huge impact on both air quality and the needs for alternative fueling stations.
-We created a function to get above data through API. This function is shown in Part 4.
+We used some socio-economic data from ACS, including household income (B19013_001), population (B01003_001), Bachelor's degree (B15003_022E), workers age 16+ (B08007_001E). These variables can provide some basic economic and social information of each county. Besides, we used energy consumption information from ACS, including utility gas (B25040_002E), bottled gas (B25040_003E), electricity (B25040_004E), oil (B25040_005E), coal (B25040_006E), and wood (B25040_007E). We believe that energy consumption is a critical predictor for air quality. Moreover, we used transportation to work data, including drive alone (B08301_003E), carpooled (B08301_004E), public transportation (B08301_010E), taxicab (B08301_016E), motorcycled (B08301_017E), bicycled (B08301_018E), and walked (B08301_019E). We believe the means of transportation also have huge impact on both air quality and the needs for alternative fueling stations. We created a function to get above data through API. This function is shown in Part 4.
 
 ### Packages
 

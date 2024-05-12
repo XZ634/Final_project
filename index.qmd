@@ -9,14 +9,50 @@ format:
     embed-resources: true
 ---
 
-# Research question
+# I. Introduction
 
-In the current study, we aim to explore and analyze the distribution of new energy power production and its power stations at the county level in the United States for the year 2021, using DC charging stations as a case study to further examine the relationship between charging infrastructure and public facilities. By integrating and utilizing data from the American Community Survey (ACS), such as income, education level, heating methods, and commuting methods, we will predict the number of charging stations in each county. Additionally, we will assess the air quality forecasts for each county and how these forecasts reflect the investments in new energy sources in 2023. This study not only provides insights into the geographic distribution of new energy technologies but also supports future energy policies and infrastructure development through an analysis of the interaction between charging infrastructure and socio-economic factors.
+## 1. Background and Literature Review
 
-## Data sets description
+The increasingly prominent environmental issues pose a significant challenge to human survival. The utilization of new energy sources, including renewable energy generation and the use of new energy vehicles, has highlighted the potential of policy solutions to address these environmental challenges. To what extent can the use of clean energy improve environmental quality? This question drives us to conduct research, aiming to establish a model that utilizes relevant data on new energy usage to predict environmental quality, especially focusing on air quality. Additionally, we seek to provide policy recommendations for further investment in new energy infrastructure.
+
+## 2. Structure of This Article
 
 
-## Library packages
+
+# 2. Data Sources
+
+### [A. Air Quality Index Annual Summary Data (2021)](https://www.epa.gov/outdoor-air-quality-data)
+
+This data is from the U.S. Environmental Protection Agency. We intend to use the proportion of "good days" as a proxy of air quality in each county in 2021. We downloaded Pre-generated data file for 2021 by clicking Pre-generated Data Files -\> Table of Annual Summary Data -\> annual_aqi_by_county_2021.zip. This zip document contains only one csv document "annual_aqi_by_county_2021.csv" and we are using this one.
+
+### [B. Alternative Fueling Station Locations (2021)](https://catalog.data.gov/dataset/alternative-fueling-station-locations-422f2)
+
+This dataset was created by The Alternative Fuels Data Center (AFDC). It contains the latitude and longitude information of each alternative fueling station across the U.S. It can be seen as a proxy of the usage of light-duty vehicles in each county in 2021. we downloaded the 2021 dataset, "Alternative Fuel Stations 2021.csv" ,under "Downloads & Resources".
+
+### [C. Energy Generation: Form EIA-923 (2021)](https://www.eia.gov/electricity/data/eia923/)
+
+This form collects detailed data -- monthly and annually -- on electricity generation from all power plants in the U.S.. It contains variables about plant name, plant code, fuel type, amount of electricity generation, amount of electricity consumed, and thus net generation, etc. Each plant could have more than one row if it uses different fuel types. By combining it with Form EIA-860, we can connect energy generations to corresponding plants. We downloaded the zip document with year of "2021: EIA-923" on this website. It contains three documents and we are using the one called "EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx" because it contains annually net electricity generation data.
+
+### [D. Power Plant: Form EIA-860 (2021)](https://www.eia.gov/electricity/data/eia860/)
+
+The Form EIA-860 collects plant-level specific information about existing and planned electric power plants with 1 megawatt or greater of combined nameplate capacity. It contains plant name, plant code, and geographical information, including county, state, longitude, latitude, etc. It can be joined with Form EIA-923 to calculate the amount of energy generation at the county level. We downloaded the zip document with year of 2021 on this website. It contains 13 documents and we are using the one called "2\_\_\_Plant_Y2021.xlsx" which provides plant-level information.
+
+### [E. NCHS Urban-Rural Classification (2013)](https://www.cdc.gov/nchs/data_access/urban_rural.htm)
+
+Given that urbanization is an important factor for air quality and demands for alternative fueling stations, we add NCHS Urban-Rural Classification as a proxy of urbanization level. There are six categories for all counties in the U.S. ranging from 1 (large central metro) to 6 (non-core). We downloaded "NCHSURCodes2013.xlsx" at the bottom of the website, under "Data Files and Documentation". Since 2013 version is the lastest, we will use the 2013 code. We believe that the urbanization levels of counties will not change significantly during a decade.
+
+### F. DC public facilities
+
+To explore the accessibility to alternative fueling stations in DC, we downloaded geojson documents of [hospitals](https://hub.arcgis.com/datasets/5de949289bb248fc842f3b8324f28eda_0/explore), [public schools](https://hub.arcgis.com/datasets/4ac321b2d409438ebd76a6569ad94034_5/explore), [charter schools](https://hub.arcgis.com/datasets/a3832935b1d644e48c887e6ec5a65fcd_1/explore), [university/college campuses](https://hub.arcgis.com/datasets/2cc7c37a61554ad181c6356023c8532c_13/explore), and [governmental buildings](https://hub.arcgis.com/datasets/f04fe795a8dd4f04a73bcc1250e20a0a_77/explore) from their websites respectively. All data are provided by Open Data DC. Besides, we used roads() to get DC roads data.
+
+### G. American Community Survey (2017-2021)
+
+We used some socio-economic data from ACS, including household income (B19013_001), population (B01003_001), Bachelor's degree (B15003_022E), workers age 16+ (B08007_001E). These variables can provide some basic economic and social information of each county.
+Besides, we used energy consumption information from ACS, including utility gas (B25040_002E), bottled gas (B25040_003E), electricity (B25040_004E), oil (B25040_005E), coal (B25040_006E), and wood (B25040_007E). We believe that energy consumption is a critical predictor for air quality.
+Moreover, we used transportation to work data, including drive alone (B08301_003E), carpooled (B08301_004E), public transportation (B08301_010E), taxicab (B08301_016E), motorcycled (B08301_017E), bicycled (B08301_018E), and walked (B08301_019E). We believe the means of transportation also have huge impact on both air quality and the needs for alternative fueling stations.
+We created a function to get above data through API. This function is shown in Part 4.
+
+### Packages
 
 ```{r}
 library(tidyverse)
@@ -31,9 +67,11 @@ library(tidymodels)
 library(vip)
 ```
 
-## Overview: green electricity generation in the U.S.
+# III. Exploratory Data Analysis
 
-### Read and combine datasets
+## 1. Overview: Green Electricity Generation In The U.S.
+
+### A. Data wrangling
 
 ```{r}
 #read electric power plants data
@@ -72,7 +110,7 @@ counties <- counties(cb = TRUE, progress_bar = FALSE) %>%
   janitor::clean_names() %>% 
   st_transform(crs = 4326) %>%
   filter(!(stusps %in% c("PR", "GU", "MP", "VI", "HI", "AK", "AS"))) %>% 
-  select(geoid, name, stusps, state_name, geometry)
+  select(geoid, name, namelsad, stusps, state_name, geometry)
 
 #use spatial join to get green electricity generated in each county
 c_green_elec <- st_join(counties, green_elec_generation) %>% 
@@ -334,14 +372,14 @@ green <- left_join(green, c_aqi, by = c("state_name" = "state", "name" = "county
 
 ```{r}
 #read urban categories data
-c_urban <- read.csv("data/Urban-Rural Classification Scheme 2013.csv") %>% 
+c_urban <- read_xlsx("data/NCHSURCodes2013.xlsx") %>% 
   janitor::clean_names() %>% 
-  select(abb, county, urban = code_2013) %>% 
-#reverse coding, using 1-6 to represent increasing urban rate
-  mutate(urban = 7 - urban)
+  select(state_abr, county_name, urban = x2013_code) %>% 
+  #reverse coding, using 1-6 to represent increasing urban rate
+  mutate(urban = 7 - urban) 
 
 #combine datasets
-green <- left_join(green, c_urban, by = c("stusps" = "abb", "name" = "county"))
+green <- left_join(green, c_urban, by = c("stusps" = "state_abr", "namelsad" = "county_name"))
 ```
 
 ### Combine ACS data
@@ -412,7 +450,7 @@ pwalk(variables, acs_combine)
 ```{r}
 #remove irrelavant variables
 green <- green %>% 
-  select(-geoid, -name, -stusps, -state_name) %>% 
+  select(-geoid, -name, -namelsad, -stusps, -state_name) %>% 
   st_drop_geometry()
 
 #remove used datasets
@@ -448,7 +486,7 @@ green <- green %>%
 
 Since green energy use (alternative energy cars) and production (green electricity) are more environmental-friendly, we expect that green energy industry contributes to better air quality. In this section, we will use a decision tree model to test this hypothesis.
 
-### Data cleaning 
+### Data cleaning
 
 ```{r}
 #remove rows with missing air quality
@@ -460,7 +498,7 @@ summary(air$good_days_rate)
 
 ### Dummy variable generation
 
-The median of good_days_rate is 84, and mean is 81, so I will code air_quality as "good" if good_days_rate > 80, and as "bad" if good_days_rate <= 80.
+The median of good_days_rate is 84, and mean is 81, so I will code air_quality as "good" if good_days_rate \> 80, and as "bad" if good_days_rate \<= 80.
 
 ```{r}
 air <- air %>% 
@@ -556,6 +594,7 @@ rm(air,
 With the development of the green energy car industry, the demand for alternative fueling stations is increasing. Is there a shortage of alternative fueling stations in DC? To address this question, we will establish a lasso regression model to identify the most significant predictors for the number of alternative fueling stations in a city. We believe this model will be highly relevant for policymakers in urban areas.
 
 ### Data cleaning
+
 Due to more than 2000 missing values in good_days_rate, I will remove it to avoid having too small of a sample size.
 
 ```{r}
@@ -632,7 +671,7 @@ rmse(data = predictions, truth = alt_fuel_stations, estimate=.pred)
 summary(green_test$alt_fuel_stations)
 ```
 
-The RMSE is 28, which is relatively small compared to the range of 4783. However, considering the median number of alternative fueling stations is 4, and since most counties are not urban areas, this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
+The RMSE is 28, which is relatively small compared to the range of 1144. However, considering the mean number of alternative fueling stations is 15.55 (since most counties are not urban areas), this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
 
 ```{r}
 #feature inportance

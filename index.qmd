@@ -208,9 +208,14 @@ dc_gov <- st_read("data/District_Government_Owned_Structures.geojson",
   select(geometry) %>% 
   mutate(facility = "Governmental Building")
 
-alt_fuel_stations <- st_read("data/Alternative_Fueling_Stations.geojson",
-                             quiet=T) %>% 
-  st_transform(crs = 4326) %>% 
+alt_fuel_stations <- read.csv("data/alt_fuel_stations (Jul 29 2021).csv") %>%
+  janitor::clean_names() %>%
+  filter(
+    !is.na(longitude),
+    !is.na(latitude)
+  ) %>% 
+  st_as_sf(coords = c("longitude","latitude")) %>%  
+  st_set_crs(4326) %>% 
   select(geometry) %>% 
   mutate(facility = "Alternative Fueling Station")
 
@@ -421,6 +426,24 @@ rm(alt_fuel_stations,
    variables)
 ```
 
+### Generate new variables
+
+```{r}
+#generate new variables
+green <- green %>% 
+  mutate(green_elec_prop = 100*green_elec/total_elec) %>% 
+  mutate(green_elec_prop = if_else(is.na(green_elec_prop), 0, green_elec_prop)) %>% 
+  mutate(labor_prop = 100*labor/population) %>% 
+  mutate(bachelor_prop = 100*bachelor/population) %>% 
+  mutate(totoal_energy_cons = utility_gas+bottled_gas+electricity+oil+coal+wood) %>% 
+  mutate(clean_energy_prop = 100*(utility_gas+bottled_gas+electricity)/totoal_energy_cons) %>% 
+  mutate(trad_energy_prop = 100*(oil+coal+wood)/totoal_energy_cons) %>% 
+  mutate(clean_trans_prop = 100*(public_trans+bicycled+walked)/labor) %>% 
+  mutate(auto_trans_prop = 100*(drive_alone+carpooled+taxicab+motorcycled)/labor) %>% 
+  select(-totoal_energy_cons) %>% 
+  mutate(afs_per_1000_dirvers = 1000*alt_fuel_stations/drive_alone)
+```
+
 ## Can green energy industry help predict air quality?
 
 Since green energy use (alternative energy cars) and production (green electricity) are more environmental-friendly, we expect that green energy industry contributes to better air quality. In this section, we will use a decision tree model to test this hypothesis.
@@ -437,11 +460,11 @@ summary(air$good_days_rate)
 
 ### Dummy variable generation
 
-The median of good_days_rate is 84, so I will code air_quality as "good" if good_days_rate > 84, and as "bad" if good_days_rate <= 84
+The median of good_days_rate is 84, and mean is 81, so I will code air_quality as "good" if good_days_rate > 80, and as "bad" if good_days_rate <= 80.
 
 ```{r}
 air <- air %>% 
-  mutate(air_quality = if_else(good_days_rate > 84, "good", "bad")) %>%
+  mutate(air_quality = if_else(good_days_rate > 80, "good", "bad")) %>%
   mutate(air_quality = factor(air_quality, levels = c("good", "bad"))) %>% 
   select(-good_days_rate)
 ```
@@ -512,7 +535,7 @@ air_fit %>%
   vip(num_features = 10)
 ```
 
-In this prediction result, accuracy, precession, and recall are between 0.6 and o.7, indicating weak prediction power. Therefore, this model can't predict air quality well. Besides, The 10 most important predictors donn't include green_elec or alt_fuel_stations, suggesting that green industry is not a strong predictor for air quality.
+In this predictive model, the accuracy is 0.668, while precision and recall fall between 0.7 and 0.8, indicating relatively weak predictive power. Therefore, this model does not perform very well in predicting air quality. Additionally, the ten most important predictors do not include green_elec or green_elec_prop. However, drive_alone, clean_energy_prop, and clean_trans_prop are significant predictors. This suggests that while green electricity generation is not a good predictor, the energy consumption structure plays a significant role. Furthermore, citizens' commuting preferences, especially driving and other cleaner transportation methods (public transportation, bicycle, walk), are significant predictors for air quality. However, there is no evidence that the use of new energy vehicles is a significant predictor, as the ten most important predictors do not include afs_per_1000_drivers or alt_fuel_stations.
 
 ### Remove irrelevant data
 
@@ -606,10 +629,10 @@ predictions <- bind_cols(
 #calculate rmse
 rmse(data = predictions, truth = alt_fuel_stations, estimate=.pred)
 
-summary(green$alt_fuel_stations)
+summary(green_test$alt_fuel_stations)
 ```
 
-The RMSE is 34, which is relatively small compared to the range of 4783. However, considering the median number of alternative fueling stations is 4, and since most counties are not urban areas, this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
+The RMSE is 28, which is relatively small compared to the range of 4783. However, considering the median number of alternative fueling stations is 4, and since most counties are not urban areas, this model will be more applicable in large cities where the number of alternative fueling stations is significantly higher.
 
 ```{r}
 #feature inportance
